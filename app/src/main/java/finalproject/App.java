@@ -5,7 +5,7 @@ package finalproject;
 
 public class App {
     public String getGreeting() {
-        return "Hello World!";
+        return "Test commit";
     }
 
     public static void main(String[] args) {

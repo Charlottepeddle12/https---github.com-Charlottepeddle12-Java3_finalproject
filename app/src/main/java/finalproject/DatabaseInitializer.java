@@ -1,6 +1,7 @@
 package finalproject;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.Statement;
 
 public class DatabaseInitializer {
@@ -101,6 +102,19 @@ public class DatabaseInitializer {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+        private static final String URL = "jdbc:mariadb://localhost:3316/javaProject";
+        private static final String USER = ""; //Database username here
+        private static final String PWORD = ""; //Database password here
+
+    public static void main(String[] args) {
+        try (Connection conn = DriverManager.getConnection(URL, USER, PWORD)) {
+            init(conn);
+            
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 }

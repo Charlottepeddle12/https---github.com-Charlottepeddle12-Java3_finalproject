@@ -105,9 +105,9 @@ public class DatabaseInitializer {
         }
     }
 
-        private static final String URL = "jdbc:mariadb://localhost:3316/javaProject";
-        private static final String USER = ""; //Database username here
-        private static final String PWORD = ""; //Database password here
+        private static final String URL = "jdbc:mariadb://localhost:3306/javaproject";
+        private static final String USER = "root"; //Database username here
+        private static final String PWORD = "Bokagi89."; //Database password here
 
     public static void main(String[] args) {
         try (Connection conn = DriverManager.getConnection(URL, USER, PWORD)) {

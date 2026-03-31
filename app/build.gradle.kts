@@ -26,7 +26,8 @@ dependencies {
     implementation(libs.guava)
     implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
     implementation("org.apache.tomee:jakartaee-api:10.0.1")
-    implementation("org.mariadb.jdbc:mariadb-java-client:3.3.3")        
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.3.3")   
+    implementation("at.favre.lib:bcrypt:0.10.2")     
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

@@ -8,27 +8,40 @@
         <title>Jakarta Facelets and JNDI DataSources</title>
     </h:head>
     <h:body>
-        <h1>Refresh Chat!</h1>
-        <h:form>
-            <h:commandButton value="Refresh" action="#{chatLogBean.pullLog}">
-                <f:ajax execute="@form" render=":greeting"/>
-            </h:commandButton>
-            <h:messages />
-        </h:form>
-        <h1>Post a Message!</h1>
-        <h:form>
-            <h:inputText value="#{chatLogBean.messageToPost}" required="true"/>
-            <h:commandButton value="Refresh" action="#{chatLogBean.postMessage}">
-                <f:ajax execute="@form" render=":greeting"/>
-            </h:commandButton>
-            <h:messages />
-        </h:form>
-       
-        <h:panelGroup id="greeting">
-            <ui:repeat value="#{chatLogBean.chatLog}" var="p">
-                <p>#{p}</p>
-            </ui:repeat>
+        <h:panelGroup id="login" rendered="#{userLoginBean.token == null}">
+            <h1>Login / Signup</h1>
+            <h:form>
+                <h:outputLabel for="username">
+                    <h:outputText value="Username: "/>
+                </h:outputLabel>
+                <h:inputText value="#{userLoginBean.userName}" required="true"/>
+                <h:outputLabel for="password">
+                    <h:outputText value="Password: "/>
+                </h:outputLabel>
+                <h:inputSecret value="#{userLoginBean.userPassword}" required="true" redisplay="false"/>
+                <h:commandButton value="Login" action="#{userLoginBean.updateToken}" />
+                <h:commandButton value="Sign-Up" action="#{userLoginBean.signup}" />
+                <h:messages />
+                <h:outputText value="#{userLoginBean.message}" />
+            </h:form>
         </h:panelGroup>
-       
+        <h:panelGroup id="server" rendered="#{userLoginBean.token != null}">
+            <h1>Refresh Chat!</h1>
+            <h:form>
+                <h:commandButton value="Refresh" action="#{chatLogBean.pullLog}" />
+                <h:messages />
+            </h:form>
+            <h1>Post a Message!</h1>
+            <h:form>
+                <h:inputText value="#{chatLogBean.messageToPost}" required="true"/>
+                <h:commandButton value="Post" action="#{chatLogBean.postMessage}" />
+                <h:messages />
+            </h:form>
+            <h:panelGroup id="chat">
+                <ui:repeat value="#{chatLogBean.chatLog}" var="p">
+                    <p>#{p}</p>
+                </ui:repeat>
+            </h:panelGroup>
+        </h:panelGroup>
     </h:body>
 </html>

@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import javax.naming.Context;
 import javax.sql.DataSource;
 
-import org.checkerframework.checker.units.qual.g;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -24,7 +23,15 @@ public class ServerService {
     private Connection conn;
     private int serverID;
     private int userID;
-    private String message;
+    private String message = "";
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
     public int getServerID() {
         return serverID;
@@ -42,20 +49,14 @@ public class ServerService {
         this.userID = userID;
     }
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     @PostConstruct
     public void openConnection(){
         try {
             Context ctx = new InitialContext();
             DataSource ds = (DataSource)ctx.lookup("java:/comp/env/jdbc/javaproject");
             this.conn = ds.getConnection();
+            this.message = "";
+
         } catch (NamingException | SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -77,8 +78,7 @@ public class ServerService {
             stmt.setInt(2, this.serverID);
             ResultSet rs = stmt.executeQuery();
             if(rs.next()){
-                this.message = "This user is already in the server.";
-                System.out.println("This user is already in the server.");
+                this.message = "User is already in the server.";
             }
             else{
                 try (
@@ -88,9 +88,7 @@ public class ServerService {
                     insertStmt.setInt(1, this.userID);
                     insertStmt.setInt(2, this.serverID);
                     insertStmt.execute();
-                    System.out.println("User sucessfully added to the server!");
-                    this.message = "This user is already in the server.";
-                    
+                    this.message = "User sucessfully added to the server!";
                 } catch (SQLException e) {
                     System.out.println(e.getMessage());
                 }
@@ -117,8 +115,7 @@ public class ServerService {
             stmt.setInt(2, this.serverID);
             ResultSet rs = stmt.executeQuery();
             if(!rs.next()){
-                this.message = "This user is already in the server.";
-                System.out.println("That user is not in the server.");
+                this.message = "User is not in the server.";
             }
             else{
                 try (
@@ -128,8 +125,7 @@ public class ServerService {
                     deleteStmt.setInt(1, this.userID);
                     deleteStmt.setInt(2, this.serverID);
                     deleteStmt.execute();
-                    System.out.println("User sucessfully removed.");
-                    this.message = "This user is already in the server.";
+                    this.message = "User sucessfully removed from the server!";
                     
                 } catch (SQLException e) {
                     System.out.println(e.getMessage());

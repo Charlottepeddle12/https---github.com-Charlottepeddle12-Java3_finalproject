@@ -5,36 +5,25 @@
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
     <h:head>
-        <title>Testin server actions</title>
+        <title>Add/remove user</title>
     </h:head>
     <h:body>
         <h1>Add to server</h1>
+        <h:outputText value="#{serverBean.message}"/>
         <h:form>
             <h1>Server ID</h1>
             <h:inputText value="#{serverBean.serverID}" required="true"/>
             <h1>User ID</h1>
             <h:inputText value="#{serverBean.userID}" required="true"/>
-            <h:commandButton value="Add" action="#{serverBean.joinServer}">
-                <f:ajax execute="@form" render="@all"/>
-            </h:commandButton>
-            <h:messages />
+            <h:commandButton value="Add" action="#{serverBean.joinServer}"/>
         </h:form>
         <h:form>
-        <!-- TODO: fix this -->
             <h1>Remove from server</h1>
             <h1>Server ID</h1>
             <h:inputText value="#{serverBean.serverID}" required="true"/>
             <h1>User ID</h1>
             <h:inputText value="#{serverBean.userID}" required="true"/>
-            <h:commandButton value="Remove" action="#{serverBean.leaveServer}">
-                <f:ajax execute="@form" render="@all"/>
-            </h:commandButton>
-            <h:messages />
+            <h:commandButton value="Remove" action="#{serverBean.leaveServer}"/>
         </h:form>
-       
-        <h:panelGroup id="greeting">
-            <h:outputText value="#{serverBean.message}" />
-        </h:panelGroup>
-       
     </h:body>
 </html>

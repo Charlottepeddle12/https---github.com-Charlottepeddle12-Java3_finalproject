@@ -29,7 +29,18 @@
             <h1>Refresh Chat!</h1>
             <h:form>
                 <h:commandButton value="Refresh" action="#{chatLogBean.pullLog}" />
+                <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
                 <h:messages />
+            </h:form>
+            <h1>Block a User</h1>
+            <h:form>
+                <h:outputLabel for="blockedUsername">
+                    <h:outputText value="Username: "/>
+                </h:outputLabel>
+                <h:inputText id="blockedUsername" value="#{blockUserBean.blockedUserName}" required="true"/>
+                <h:commandButton value="Block" action="#{blockUserBean.blockUser}" />
+                <h:messages />
+                <h:outputText value="#{blockUserBean.message}" />
             </h:form>
             <h1>Post a Message!</h1>
             <h:form>

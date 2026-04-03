@@ -7,6 +7,7 @@
     <f:metadata>
         <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
         <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
+        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
     </f:metadata>
     <h:head>
         <title>Jakarta Facelets and JNDI DataSources</title>
@@ -36,16 +37,26 @@
                 <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
                 <h:messages />
             </h:form>
-            <h1>Block a User</h1>
+            <h1>Block / Unblock User</h1>
             <h:form>
                 <h:outputLabel for="blockedUsername">
                     <h:outputText value="Username: "/>
                 </h:outputLabel>
                 <h:inputText id="blockedUsername" value="#{blockUserBean.blockedUserName}" required="true"/>
                 <h:commandButton value="Block" action="#{blockUserBean.blockUser}" />
+                <h:commandButton value="Unblock" action="#{blockUserBean.unblockUser}" />
                 <h:messages />
                 <h:outputText value="#{blockUserBean.message}" />
             </h:form>
+            <h3>Blocked Users</h3>
+            <h:panelGroup rendered="#{empty blockUserBean.blockedUserNames}">
+                <p>No blocked users.</p>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty blockUserBean.blockedUserNames}">
+                <ui:repeat value="#{blockUserBean.blockedUserNames}" var="blockedName">
+                    <p>#{blockedName}</p>
+                </ui:repeat>
+            </h:panelGroup>
             <h1>Send Friend Request</h1>
             <h:form>
                 <h:outputLabel for="friendUsername">

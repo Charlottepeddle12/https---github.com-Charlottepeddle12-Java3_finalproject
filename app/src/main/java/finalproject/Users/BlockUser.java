@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -23,6 +25,7 @@ public class BlockUser implements Serializable {
     private Connection conn;
     private String blockedUserName;
     private String message;
+    private final List<String> blockedUserNames = new ArrayList<>();
 
     @Inject
     private UserLogin login;
@@ -106,9 +109,79 @@ public class BlockUser implements Serializable {
                     int rowsAffected = insertBlock.executeUpdate();
                     if (rowsAffected == 1) {
                         message = "Blocked user " + blockedUserName + ".";
+                        loadBlockedUsers();
                     } else {
                         message = "Block request failed.";
                     }
+                }
+            }
+        } catch (SQLException e) {
+            message = e.getMessage();
+        }
+    }
+
+    public void unblockUser() {
+        if (conn == null) {
+            message = "Database connection is not available.";
+            return;
+        }
+
+        if (login == null || login.getUserId() <= 0) {
+            message = "You must be logged in to unblock a user.";
+            return;
+        }
+
+        if (blockedUserName == null || blockedUserName.isBlank()) {
+            message = "Enter a username.";
+            return;
+        }
+
+        try (PreparedStatement findUser = conn.prepareStatement("SELECT userID FROM users WHERE username = ?")) {
+            findUser.setString(1, blockedUserName);
+            try (ResultSet userResult = findUser.executeQuery()) {
+                if (!userResult.next()) {
+                    message = "Enter correct username.";
+                    return;
+                }
+
+                int blockedId = userResult.getInt("userID");
+                if (blockedId == login.getUserId()) {
+                    message = "You cannot unblock yourself.";
+                    return;
+                }
+
+                try (PreparedStatement removeBlock = conn
+                        .prepareStatement("DELETE FROM blocks WHERE userID = ? AND blockedID = ?")) {
+                    removeBlock.setInt(1, login.getUserId());
+                    removeBlock.setInt(2, blockedId);
+                    int rowsAffected = removeBlock.executeUpdate();
+                    if (rowsAffected == 1) {
+                        message = "Unblocked user " + blockedUserName + ".";
+                        loadBlockedUsers();
+                    } else {
+                        message = "User is not currently blocked.";
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            message = e.getMessage();
+        }
+    }
+
+    public void loadBlockedUsers() {
+        blockedUserNames.clear();
+
+        if (conn == null || login == null || login.getUserId() <= 0) {
+            return;
+        }
+
+        try (PreparedStatement findBlockedUsers = conn.prepareStatement(
+                "SELECT u.username FROM blocks b JOIN users u ON u.userID = b.blockedID "
+                        + "WHERE b.userID = ? ORDER BY u.username")) {
+            findBlockedUsers.setInt(1, login.getUserId());
+            try (ResultSet result = findBlockedUsers.executeQuery()) {
+                while (result.next()) {
+                    blockedUserNames.add(result.getString("username"));
                 }
             }
         } catch (SQLException e) {
@@ -126,5 +199,9 @@ public class BlockUser implements Serializable {
 
     public String getMessage() {
         return message;
+    }
+
+    public List<String> getBlockedUserNames() {
+        return blockedUserNames;
     }
 }

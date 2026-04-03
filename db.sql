@@ -39,3 +39,37 @@ CREATE TABLE IF NOT EXISTS `friends` (
   CONSTRAINT `fk_friends_addressee` FOREIGN KEY (`addresseeID`) REFERENCES `users` (`userID`) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT `chk_no_self_friend` CHECK (`requesterID` <> `addresseeID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- Blocks table (ON DELETE CASCADE - delete block records when user deleted)
+
+CREATE TABLE IF NOT EXISTS blocks (
+    userID INT NOT NULL,
+    blockedID INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (userID, blockedID),
+    CONSTRAINT fk_blocks_user
+        FOREIGN KEY (userID) REFERENCES users(userID)
+        ON DELETE CASCADE
+        ON UPDATE NO ACTION,
+    CONSTRAINT fk_blocks_blocked
+        FOREIGN KEY (blockedID) REFERENCES users(userID)
+        ON DELETE CASCADE
+        ON UPDATE NO ACTION,
+    CONSTRAINT chk_no_self_block
+        CHECK (userID <> blockedID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+DROP TRIGGER IF EXISTS trg_blocks_after_insert_remove_friendship;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_blocks_after_insert_remove_friendship
+AFTER INSERT ON blocks
+FOR EACH ROW
+BEGIN
+    DELETE FROM friends
+    WHERE (requesterID = NEW.userID AND addresseeID = NEW.blockedID)
+       OR (requesterID = NEW.blockedID AND addresseeID = NEW.userID);
+END$$
+
+DELIMITER ;

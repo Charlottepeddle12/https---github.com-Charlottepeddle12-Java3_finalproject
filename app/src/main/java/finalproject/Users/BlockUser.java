@@ -72,13 +72,11 @@ public class BlockUser implements Serializable {
                     message = "Enter correct username.";
                     return;
                 }
-
                 int blockedId = userResult.getInt("userID");
                 if (blockedId == login.getUserId()) {
                     message = "You cannot block yourself.";
                     return;
                 }
-
                 try (PreparedStatement checkExisting = conn.prepareStatement(
                         "SELECT 1 FROM blocks WHERE userID = ? AND blockedID = ?")) {
                     checkExisting.setInt(1, login.getUserId());
@@ -90,7 +88,6 @@ public class BlockUser implements Serializable {
                         }
                     }
                 }
-
                 try (PreparedStatement checkReverseBlock = conn.prepareStatement(
                         "SELECT 1 FROM blocks WHERE userID = ? AND blockedID = ?")) {
                     checkReverseBlock.setInt(1, blockedId);
@@ -102,7 +99,6 @@ public class BlockUser implements Serializable {
                         }
                     }
                 }
-
                 try (PreparedStatement insertBlock = conn.prepareStatement(
                         "INSERT INTO blocks (userID, blockedID) VALUES (?, ?)")) {
                     insertBlock.setInt(1, login.getUserId());

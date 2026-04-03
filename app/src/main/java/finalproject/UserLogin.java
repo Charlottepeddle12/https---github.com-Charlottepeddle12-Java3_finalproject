@@ -43,7 +43,7 @@ public class UserLogin implements Serializable{
         try {            
             token = null;
             Context ctx = new InitialContext();
-            DataSource ds = (DataSource) ctx.lookup("java:/comp/env/jdbc/Assignment2");
+            DataSource ds = (DataSource) ctx.lookup("java:/comp/env/jdbc/javaproject");
             conn = ds.getConnection();
         } catch (Exception e) {
             System.out.println(e.getMessage());

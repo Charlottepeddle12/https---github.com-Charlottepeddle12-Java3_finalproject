@@ -15,8 +15,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Named;
 
-//Maybe a class to implement invites, kicks, joins, leaves
-
 @Named("serverBean")
 @RequestScoped
 public class ServerService {

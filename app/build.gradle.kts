@@ -7,7 +7,9 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
-    application
+    //application
+      java
+      war
 }
 
 repositories {
@@ -16,13 +18,12 @@ repositories {
 }
 
 dependencies {
+    providedCompile("jakarta.servlet:jakarta.servlet-api:6.0.0")
+
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    // This dependency is used by the application.
-    implementation(libs.guava)
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -30,11 +31,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-application {
-    // Define the main class for the application.
-    mainClass = "finalproject.App"
 }
 
 tasks.named<Test>("test") {

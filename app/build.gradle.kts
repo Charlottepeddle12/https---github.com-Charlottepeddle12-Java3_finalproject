@@ -18,16 +18,15 @@ repositories {
 
 dependencies {
     // Use JUnit Jupiter for testing.
-    testImplementation(libs.junit.jupiter)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.12.1")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // This dependency is used by the application.
     implementation(libs.guava)
-    implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
+    implementation("at.favre.lib:bcrypt:0.10.2")
     implementation("org.apache.tomee:jakartaee-api:10.0.1")
-    implementation("org.mariadb.jdbc:mariadb-java-client:3.3.3")   
-    implementation("at.favre.lib:bcrypt:0.10.2")     
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

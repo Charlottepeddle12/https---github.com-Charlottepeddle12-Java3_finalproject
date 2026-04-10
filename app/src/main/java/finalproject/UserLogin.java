@@ -1,4 +1,4 @@
-package finalproject.Users;
+package finalproject;
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -43,10 +43,10 @@ public class UserLogin implements Serializable{
         try {            
             token = null;
             Context ctx = new InitialContext();
-            DataSource ds = (DataSource) ctx.lookup("java:/comp/env/jdbc/javaproject");
+            DataSource ds = (DataSource) ctx.lookup("java:/comp/env/jdbcjavaproject");
             conn = ds.getConnection();
         } catch (Exception e) {
-            message = e.getMessage();
+            System.out.println(e.getMessage());
         }
         System.out.println(token);
     }
@@ -65,11 +65,6 @@ public class UserLogin implements Serializable{
     }
 
     public void updateToken() {
-        if (conn == null) {
-            message = "Database connection is not available.";
-            return;
-        }
-
         try (PreparedStatement stmt = conn.prepareStatement("SELECT userID, token, PW_Hash FROM users WHERE username = ?")) {
             stmt.setString(1, userName);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -91,11 +86,6 @@ public class UserLogin implements Serializable{
     }
 
     public void signup() {
-        if (conn == null) {
-            message = "Database connection is not available.";
-            return;
-        }
-
         try(PreparedStatement stmt = conn.prepareStatement("INSERT INTO users (username, PW_Hash, token) VALUES (?, ?, SHA2(RAND(), 256))")) {
             byte[] hash = BCrypt.withDefaults().hash(12, userPassword.getBytes("UTF-16"));
             stmt.setString(1, userName);
@@ -110,13 +100,6 @@ public class UserLogin implements Serializable{
             message = e.getMessage();
             return;
         }
-    }
-
-    public void logout() {
-        token = null;
-        userId = 0;
-        userPassword = null;
-        message = "Logged out.";
     }
 
     public String getUserName() {

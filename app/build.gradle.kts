@@ -17,8 +17,6 @@ repositories {
 }
 
 dependencies {
-    providedCompile("jakarta.servlet:jakarta.servlet-api:6.0.0")
-
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
 

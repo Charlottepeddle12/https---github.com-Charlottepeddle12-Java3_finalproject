@@ -1,8 +1,12 @@
 USE javaproject;
 
 -- Drop tables in correct order (reverse dependency order)
-DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS server_invites;
+DROP TABLE IF EXISTS server_members;
+DROP TABLE IF EXISTS servers;
+DROP TABLE IF EXISTS blocks;
 DROP TABLE IF EXISTS friends;
+DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS users;
 
 -- Users table (no foreign keys)
@@ -57,6 +61,70 @@ CREATE TABLE IF NOT EXISTS blocks (
         ON UPDATE NO ACTION,
     CONSTRAINT chk_no_self_block
         CHECK (userID <> blockedID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- Servers table: supports public/private, owner is admin (references users.userID)
+CREATE TABLE IF NOT EXISTS servers (
+  serverID INT(11) NOT NULL AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  ownerID INT(11) NULL,
+  is_public BOOLEAN NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (serverID),
+  KEY servers_owner_fk (ownerID),
+  CONSTRAINT servers_owner_fk
+    FOREIGN KEY (ownerID) REFERENCES users(userID) 
+    ON DELETE SET NULL
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- Server members: tracks user membership, role, and permissions
+CREATE TABLE IF NOT EXISTS server_members (
+  userID INT NOT NULL,
+  serverID INT NOT NULL,
+  can_invite BOOLEAN NOT NULL DEFAULT FALSE,
+  can_kick BOOLEAN NOT NULL DEFAULT FALSE,
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (userID, serverID),
+  KEY sm_user_fk (userID),
+  KEY sm_server_fk (serverID),
+  CONSTRAINT sm_user_fk
+    FOREIGN KEY (userID) REFERENCES users(userID) 
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT sm_server_fk
+    FOREIGN KEY (serverID) REFERENCES servers(serverID) 
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- Server invites: tracks pending invites for private servers
+CREATE TABLE IF NOT EXISTS server_invites (
+  inviteID INT (11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  serverID INT NOT NULL,
+  invitedID INT NOT NULL,
+  invited_by INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (inviteID),
+  UNIQUE KEY unique_invite (serverID, invitedID),
+  KEY si_server_fk (serverID),
+  KEY si_invited_fk (invitedID),
+  KEY si_inviter_fk (invited_by),
+  CONSTRAINT si_server_fk
+    FOREIGN KEY (serverID)
+    REFERENCES servers(serverID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT si_invited_fk
+    FOREIGN KEY (invitedID)
+    REFERENCES users(userID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT si_inviter_fk
+    FOREIGN KEY (invited_by)
+    REFERENCES users(userID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 DROP TRIGGER IF EXISTS trg_blocks_after_insert_remove_friendship;

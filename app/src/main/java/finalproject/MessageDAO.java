@@ -24,14 +24,14 @@ public class MessageDAO {
         }
     }
 
-    public boolean sendMessage(int channelId, int userId, String messageText) {
-        String sql = "INSERT INTO messages (channel_id, user_id, message_text) VALUES (?, ?, ?)";
+    public boolean sendMessage(int channelID, int senderID, String messageText) {
+        String sql = "INSERT INTO messages (channelID, conversationID, senderID, message_text) VALUES (?, NULL, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, channelId);
-            stmt.setInt(2, userId);
+            stmt.setInt(1, channelID);
+            stmt.setInt(2, senderID);
             stmt.setString(3, messageText);
 
             return stmt.executeUpdate() > 0;
@@ -43,31 +43,34 @@ public class MessageDAO {
         return false;
     }
 
-    public List<Message> getMessagesByChannel(int channelId) {
+    public List<Message> getMessagesByChannel(int channelID) {
         List<Message> messages = new ArrayList<>();
 
         String sql = """
-            SELECT m.message_id, m.channel_id, m.user_id, m.message_text, m.created_at,
+            SELECT m.messageID, m.channelID, m.conversationID, m.senderID,
+                   m.message_text, m.image_data, m.created_at,
                    u.username
             FROM messages m
-            JOIN users u ON m.user_id = u.user_id
-            WHERE m.channel_id = ?
+            LEFT JOIN users u ON m.senderID = u.userID
+            WHERE m.channelID = ?
             ORDER BY m.created_at ASC
         """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, channelId);
+            stmt.setInt(1, channelID);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Message message = new Message();
-                    message.setMessageId(rs.getInt("message_id"));
-                    message.setChannelId(rs.getInt("channel_id"));
-                    message.setUserId(rs.getInt("user_id"));
+                    message.setMessageID(rs.getInt("messageID"));
+                    message.setChannelID((Integer) rs.getObject("channelID"));
+                    message.setConversationID((Integer) rs.getObject("conversationID"));
+                    message.setSenderID((Integer) rs.getObject("senderID"));
                     message.setUsername(rs.getString("username"));
                     message.setMessageText(rs.getString("message_text"));
+                    message.setImageData(rs.getBytes("image_data"));
                     message.setCreatedAt(rs.getTimestamp("created_at"));
                     messages.add(message);
                 }
@@ -80,14 +83,14 @@ public class MessageDAO {
         return messages;
     }
 
-    public boolean deleteMessage(int messageId, int userId) {
-        String sql = "DELETE FROM messages WHERE message_id = ? AND user_id = ?";
+    public boolean deleteMessage(int messageID, int senderID) {
+        String sql = "DELETE FROM messages WHERE messageID = ? AND senderID = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, messageId);
-            stmt.setInt(2, userId);
+            stmt.setInt(1, messageID);
+            stmt.setInt(2, senderID);
 
             return stmt.executeUpdate() > 0;
 

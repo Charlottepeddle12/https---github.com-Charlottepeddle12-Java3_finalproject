@@ -2,53 +2,44 @@ package finalproject;
 import java.sql.Timestamp;
 
 public class Channel {
-    private int channelId;
-    private int serverId;
-    private String channelName;
-    private int createdBy;
+    private int channelID;
+    private int serverID;
+    private String name;
     private Timestamp createdAt;
 
     public Channel() {}
 
-    public Channel(int channelId, int serverId, String channelName, int createdBy, Timestamp createdAt) {
-        this.channelId = channelId;
-        this.serverId = serverId;
-        this.channelName = channelName;
-        this.createdBy = createdBy;
+    public Channel(int channelID, int serverID, String name, Timestamp createdAt) {
+        this.channelID = channelID;
+        this.serverID = serverID;
+        this.name = name;
         this.createdAt = createdAt;
     }
 
-    public int getChannelId() {
-        return channelId;
+    public int getChannelID() {
+        return channelID;
     }
 
-    public void setChannelId(int channelId) {
-        this.channelId = channelId;
+    public void setChannelID(int channelID) {
+        this.channelID = channelID;
     }
 
-    public int getServerId() {
-        return serverId;
+    public int getServerID() {
+        return serverID;
     }
 
-    public void setServerId(int serverId) {
-        this.serverId = serverId;
+    public void setServerID(int serverID) {
+        this.serverID = serverID;
     }
 
-    public String getChannelName() {
-        return channelName;
+    public String getName() {
+        return name;
     }
 
-    public void setChannelName(String channelName) {
-        this.channelName = channelName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(int createdBy) {
-        this.createdBy = createdBy;
-    }
 
     public Timestamp getCreatedAt() {
         return createdAt;

@@ -23,15 +23,14 @@ public class ChannelDAO {
         }
     }
 
-    public boolean createChannel(int serverId, String channelName, int createdBy) {
-        String sql = "INSERT INTO channels (server_id, channel_name, created_by) VALUES (?, ?, ?)";
+    public boolean createChannel(int serverID, String name) {
+        String sql = "INSERT INTO channels (serverID, name) VALUES (?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, serverId);
-            stmt.setString(2, channelName);
-            stmt.setInt(3, createdBy);
+            stmt.setInt(1, serverID);
+            stmt.setString(2, name);
 
             return stmt.executeUpdate() > 0;
 
@@ -42,22 +41,21 @@ public class ChannelDAO {
         return false;
     }
 
-    public List<Channel> getChannelsByServer(int serverId) {
+    public List<Channel> getChannelsByServer(int serverID) {
         List<Channel> channels = new ArrayList<>();
-        String sql = "SELECT * FROM channels WHERE server_id = ? ORDER BY channel_name ASC";
+        String sql = "SELECT channelID, serverID, name, created_at FROM channels WHERE serverID = ? ORDER BY name ASC";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, serverId);
+            stmt.setInt(1, serverID);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Channel channel = new Channel();
-                    channel.setChannelId(rs.getInt("channel_id"));
-                    channel.setServerId(rs.getInt("server_id"));
-                    channel.setChannelName(rs.getString("channel_name"));
-                    channel.setCreatedBy(rs.getInt("created_by"));
+                    channel.setChannelID(rs.getInt("channelID"));
+                    channel.setServerID(rs.getInt("serverID"));
+                    channel.setName(rs.getString("name"));
                     channel.setCreatedAt(rs.getTimestamp("created_at"));
                     channels.add(channel);
                 }
@@ -70,21 +68,20 @@ public class ChannelDAO {
         return channels;
     }
 
-    public Channel getChannelById(int channelId) {
-        String sql = "SELECT * FROM channels WHERE channel_id = ?";
+    public Channel getChannelById(int channelID) {
+        String sql = "SELECT channelID, serverID, name, created_at FROM channels WHERE channelID = ?";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, channelId);
+            stmt.setInt(1, channelID);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Channel channel = new Channel();
-                    channel.setChannelId(rs.getInt("channel_id"));
-                    channel.setServerId(rs.getInt("server_id"));
-                    channel.setChannelName(rs.getString("channel_name"));
-                    channel.setCreatedBy(rs.getInt("created_by"));
+                    channel.setChannelID(rs.getInt("channelID"));
+                    channel.setServerID(rs.getInt("serverID"));
+                    channel.setName(rs.getString("name"));
                     channel.setCreatedAt(rs.getTimestamp("created_at"));
                     return channel;
                 }

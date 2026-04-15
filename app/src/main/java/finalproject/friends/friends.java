@@ -22,7 +22,7 @@ import jakarta.inject.Named;
 
 @Named("friendsBean")
 @SessionScoped
-public class friends implements Serializable {
+public class Friends implements Serializable {
 	private Connection conn;
 	private String sendFriendUserName;
 	private String acceptFriendUserName;
@@ -32,6 +32,7 @@ public class friends implements Serializable {
 	private List<String> friendNames = new ArrayList<>();
 	private String receivedRequestsMessage;
 	private int friendCount;
+	private List<String> sentFriendRequests = new ArrayList<>();
 
 	@Inject
 	private UserLogin login;
@@ -135,6 +136,9 @@ public class friends implements Serializable {
 		} catch (SQLException e) {
 			sendMessage = e.getMessage();
 		}
+		loadFriendNames();
+		loadReceivedFriendRequests();
+		loadSentFriendRequests();
 	}
 
 	public void acceptFriendRequest() {
@@ -205,6 +209,7 @@ public class friends implements Serializable {
 		}
 		loadFriendNames();
 		loadReceivedFriendRequests();
+		loadSentFriendRequests();
 	}
 
 	public void loadReceivedFriendRequests() {
@@ -260,8 +265,129 @@ public class friends implements Serializable {
 		}
 	}
 
+	public void declineFriendRequest() {
+		if (login == null || login.getUserId() <= 0) {
+			acceptMessage = "You must be logged in.";
+			return;
+		}
+
+		if (acceptFriendUserName == null || acceptFriendUserName.isBlank()) {
+			acceptMessage = "Enter a username.";
+			return;
+		}
+
+		try (PreparedStatement findUser = conn.prepareStatement(
+				"SELECT userID FROM users WHERE username = ?")) {
+
+			findUser.setString(1, acceptFriendUserName);
+
+			try (ResultSet rs = findUser.executeQuery()) {
+				if (!rs.next()) {
+					acceptMessage = "User not found.";
+					return;
+				}
+
+				int senderId = rs.getInt("userID");
+
+				try (PreparedStatement deleteRequest = conn.prepareStatement(
+						"DELETE FROM friends WHERE requesterID = ? AND addresseeID = ? AND status = 'PENDING'")) {
+
+					deleteRequest.setInt(1, senderId);
+					deleteRequest.setInt(2, login.getUserId());
+
+					int rows = deleteRequest.executeUpdate();
+
+					if (rows == 1) {
+						acceptMessage = "Friend request declined.";
+					} else {
+						acceptMessage = "No request to decline.";
+					}
+				}
+			}
+
+		} catch (SQLException e) {
+			acceptMessage = e.getMessage();
+		}
+
+		loadFriendNames();
+		loadReceivedFriendRequests();
+		loadSentFriendRequests();
+	}
+	public void loadSentFriendRequests() {
+		sentFriendRequests.clear();
+
+		if (login == null || login.getUserId() <= 0) {
+			return;
+		}
+
+		try (PreparedStatement stmt = conn.prepareStatement(
+				"SELECT users.username " +
+				"FROM friends JOIN users ON friends.addresseeID = users.userID " +
+				"WHERE friends.requesterID = ? AND friends.status = 'PENDING' " +
+				"ORDER BY users.username")) {
+
+			stmt.setInt(1, login.getUserId());
+
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					sentFriendRequests.add(rs.getString("username"));
+				}
+			}
+
+		} catch (SQLException e) {
+			sendMessage = e.getMessage();
+		}
+	}
+
+	public void cancelSentFriendRequest(String username) {
+		if (login == null || login.getUserId() <= 0) {
+			sendMessage = "You must be logged in.";
+			return;
+		}
+
+		try (PreparedStatement findUser = conn.prepareStatement(
+				"SELECT userID FROM users WHERE username = ?")) {
+
+			findUser.setString(1, username);
+
+			try (ResultSet rs = findUser.executeQuery()) {
+				if (!rs.next()) {
+					sendMessage = "User not found.";
+					return;
+				}
+
+				int friendId = rs.getInt("userID");
+
+				try (PreparedStatement delete = conn.prepareStatement(
+						"DELETE FROM friends WHERE requesterID = ? AND addresseeID = ? AND status = 'PENDING'")) {
+
+					delete.setInt(1, login.getUserId());
+					delete.setInt(2, friendId);
+
+					int rows = delete.executeUpdate();
+
+					if (rows == 1) {
+						sendMessage = "Friend request cancelled.";
+					} else {
+						sendMessage = "No pending request found.";
+					}
+				}
+			}
+
+		} catch (SQLException e) {
+			sendMessage = e.getMessage();
+		}
+
+		loadFriendNames();
+		loadReceivedFriendRequests();
+		loadSentFriendRequests();
+	}
 	public String getSendFriendUserName() {
 		return sendFriendUserName;
+	}
+
+	public List<String> getSentFriendRequests() {
+		return sentFriendRequests;
 	}
 
 	public void setSendFriendUserName(String sendFriendUserName) {

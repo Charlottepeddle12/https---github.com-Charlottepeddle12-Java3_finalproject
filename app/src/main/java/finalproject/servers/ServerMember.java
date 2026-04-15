@@ -1,18 +1,22 @@
-package finalproject;
+package finalproject.servers;
 
 public class ServerMember {
     private int serverID;
-    private String role;
+    private int userID;
+
     public int getServerID() {
         return serverID;
     }
+
     public void setServerID(int serverID) {
         this.serverID = serverID;
     }
-    public String getRole() {
-        return role;
+
+    public int getUserID() {
+        return userID;
     }
-    public void setRole(String role) {
-        this.role = role;
+
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 }

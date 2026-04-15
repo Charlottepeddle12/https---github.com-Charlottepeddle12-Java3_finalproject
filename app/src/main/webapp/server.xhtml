@@ -4,26 +4,176 @@
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
-    <h:head>
-        <title>Add/remove user</title>
-    </h:head>
-    <h:body>
-        <h1>Add to server</h1>
-        <h:outputText value="#{serverBean.message}"/>
+       <f:metadata>
+        <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
+        <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
+        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+        <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+    </f:metadata>
+
+<h:head>
+    <title>Server Management</title>
+</h:head>
+
+<h:body>
+    <h:panelGroup  rendered="#{userLoginBean.userId > 0}">
         <h:form>
-            <h1>Server ID</h1>
-            <h:inputText value="#{serverBean.serverID}" required="true"/>
-            <h1>User ID</h1>
-            <h:inputText value="#{serverBean.userID}" required="true"/>
-            <h:commandButton value="Add" action="#{serverBean.joinServer}"/>
+            <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+            <h1>Server Management</h1>
+            <h:panelGrid columns="2">
+                <h:outputLabel for="serverName" value="Server Name:" />
+                <h:inputText id="serverName" value="#{serverBean.serverName}" required="true" />
+                <h:outputLabel for="publicServer" value="Public Server:" />
+                <h:selectBooleanCheckbox id="publicServer" value="#{serverBean.publicServer}" />
+                <h:commandButton value="Create Server" action="#{serverBean.createServer}" />
+            </h:panelGrid>
+            <h:messages globalOnly="true" />
+        <h:outputText value="#{serverBean.message}" rendered="#{not empty serverBean.message}" style="color: green; margin-top: 10px;" />
         </h:form>
-        <h:form>
-            <h1>Remove from server</h1>
-            <h1>Server ID</h1>
-            <h:inputText value="#{serverBean.serverID}" required="true"/>
-            <h1>User ID</h1>
-            <h:inputText value="#{serverBean.userID}" required="true"/>
-            <h:commandButton value="Remove" action="#{serverBean.leaveServer}"/>
-        </h:form>
-    </h:body>
+    <h:form>
+        <h:commandButton value="View My Servers" action="#{serverBean.loadUserServers}" />
+        <h:dataTable value="#{serverBean.servers}" var="server" border="1">
+            <h:column>
+                <f:facet name="header">ID</f:facet>
+                #{server.serverID}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Name</f:facet>
+                #{server.name}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Owner</f:facet>
+                #{server.ownerID}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Public</f:facet>
+                #{server.publicServer ? "Yes" : "No"}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Members</f:facet>
+                <ui:repeat value="#{serverBean.loadServerMembers(server.serverID)}" var="m">
+                    <h:outputText value="#{m}" />
+                    <br/>
+                </ui:repeat>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Delete</f:facet>
+                <h:commandButton value="Delete"
+                                action="#{serverBean.deleteServerByName(server.name)}"
+                                rendered="#{serverBean.userId eq server.ownerID}"
+                                onclick="return confirm('Delete this server?');">
+                    <f:ajax execute="@this" render="@form" />
+                </h:commandButton>
+
+            </h:column>
+        </h:dataTable>
+        <h:outputText value="#{serverBean.message}" rendered="#{not empty serverBean.message}" style="color: green; margin-top: 10px;" />
+    </h:form>
+    <h:form>
+        <h:commandButton value="Browse Public Servers" action="#{serverBean.loadPublicServers}" />
+        <h:dataTable value="#{serverBean.publicServers}" var="server" border="1">
+            <h:column>
+                <f:facet name="header">ID</f:facet>
+                #{server.serverID}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Name</f:facet>
+                #{server.name}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Action</f:facet>
+                <h:commandButton value="Join" action="#{serverBean.joinPublicServer(server.serverID)}">
+                    <f:ajax execute="@form" render="@form"/>
+                </h:commandButton>
+            </h:column>
+        </h:dataTable>
+    </h:form>
+    <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="inviteServerName" value="Server Name:" />
+            <h:inputText id="inviteServerName" value="#{serverBean.inviteServerName}" required="true" />
+            <h:outputLabel for="inviteUsername" value="Username to Invite:" />
+            <h:inputText id="inviteUsername" value="#{serverBean.inviteTargetUserName}" required="true" />
+            <h:commandButton value="Send Invite"
+                action="#{serverBean.inviteUserToServer}">
+                <f:ajax execute="@form" render="@form :inviteMessage" />
+            </h:commandButton>
+        </h:panelGrid>
+        <h:outputText id="inviteMessage" value="#{serverBean.message}" rendered="#{not empty serverBean.message}" style="color: green; margin-top: 10px;" />
+    </h:form>
+    <h:form>
+        <h:commandButton value="Load My Invites" action="#{serverBean.loadMyInvites}">
+            <f:ajax execute="@form" render="@form" />
+        </h:commandButton>
+        <h:dataTable id="inviteTable" value="#{serverBean.myInvites}" var="invite" rendered="#{not empty serverBean.myInvites}" border="1">
+            <h:column>
+                <f:facet name="header">Invite ID</f:facet>
+                #{invite.inviteID}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Server</f:facet>
+                #{invite.serverName}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Invited By</f:facet>
+                #{invite.inviterName}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Action</f:facet>
+                <h:commandButton value="Accept" action="#{serverBean.acceptInvite(invite.inviteID)}">
+                    <f:ajax execute="@form" render="@form"/>
+                </h:commandButton>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Action</f:facet>
+                <h:commandButton value="Decline" action="#{serverBean.declineInvite(invite.inviteID)}">
+                    <f:ajax execute="@form" render="@form"/>
+                </h:commandButton>
+            </h:column>
+        </h:dataTable>
+    </h:form>
+    <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="kickServerName" value="Server Name:" />
+            <h:inputText id="kickServerName" value="#{serverBean.kickServerName}" required="true" />
+            <h:outputLabel for="kickUsername" value="Username to Kick:" />
+            <h:inputText id="kickUsername" value="#{serverBean.kickTargetUserName}" required="true" />
+            <h:commandButton value="Kick User"
+                action="#{serverBean.kickUserFromServer}">
+                <f:ajax execute="@form" render="@form" />
+            </h:commandButton>
+        </h:panelGrid>
+        <h:outputText id="kickMessage" value="#{serverBean.message}" rendered="#{not empty serverBean.message}" style="color: green; margin-top: 10px;" />
+    </h:form>
+    <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="transferServerName" value="Server Name:" />
+            <h:inputText id="transferServerName" value="#{serverBean.transferServerName}" required="true" />
+            <h:outputLabel for="transferTargetUser" value="New Owner Username:" />
+            <h:inputText id="transferTargetUser" value="#{serverBean.transferTargetUserName}"  required="true" />
+
+            <h:commandButton value="Transfer Ownership"
+                action="#{serverBean.transferServerOwnership}">
+                <f:ajax execute="@form" render="@form" />
+            </h:commandButton>
+        </h:panelGrid>
+        <h:outputText id="transferMessage" value="#{serverBean.message}" rendered="#{not empty serverBean.message}" style="color: green; margin-top: 10px;" />
+    </h:form>
+    <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="leaveServerName" value="Server Name:" />
+            <h:inputText id="leaveServerName"
+                        value="#{serverBean.leaveServerName}"
+                        required="true" />
+
+            <h:commandButton value="Leave Server"
+                            action="#{serverBean.leaveServer}">
+                <f:ajax execute="@form" render="@form" />
+        </h:commandButton>
+        </h:panelGrid>
+        <h:outputText value="#{serverBean.message}" style="color:red;" />
+    </h:form>
+    </h:panelGroup>
+ <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
+</h:body>
 </html>

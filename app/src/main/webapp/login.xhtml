@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+<h:head>
+    <title>Login / Signup</title>
+</h:head>
+<h:body>
+    <h:panelGroup id="login" rendered="#{userLoginBean.token == null}">
+        <h1>Login / Signup</h1>
+        <h:form>
+            <h:outputLabel for="username">
+                <h:outputText value="Username: "/>
+            </h:outputLabel>
+            <h:inputText value="#{userLoginBean.userName}" required="true"/>
+            <h:outputLabel for="password">
+                <h:outputText value="Password: "/>
+            </h:outputLabel>
+            <h:inputSecret value="#{userLoginBean.userPassword}" required="true" redisplay="false"/>
+            <h:commandButton value="Login" action="#{userLoginBean.login}" />
+            <h:commandButton value="Sign-Up" action="#{userLoginBean.signup}" />
+            <h:messages />
+            <h:outputText value="#{userLoginBean.message}" />
+        </h:form>
+    </h:panelGroup>
+    <h:panelGroup id="dashboard" rendered="#{userLoginBean.token != null}">
+        <h2>Welcome, #{userLoginBean.userName}!</h2>
+        <h3>Dashboard (coming soon)</h3>
+        <h:form>
+            <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
+        </h:form>
+    </h:panelGroup>
+</h:body>
+</html>

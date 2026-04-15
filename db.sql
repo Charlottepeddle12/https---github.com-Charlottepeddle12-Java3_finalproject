@@ -1,3 +1,5 @@
+DROP DATABASE IF EXISTS javaproject;
+CREATE DATABASE IF NOT EXISTS javaproject;
 USE javaproject;
 
 -- Drop tables in correct order (reverse dependency order)
@@ -35,8 +37,7 @@ CREATE TABLE IF NOT EXISTS `friends` (
   `accepted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`requesterID`, `addresseeID`),
   CONSTRAINT `fk_friends_requester` FOREIGN KEY (`requesterID`) REFERENCES `users` (`userID`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  CONSTRAINT `fk_friends_addressee` FOREIGN KEY (`addresseeID`) REFERENCES `users` (`userID`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  CONSTRAINT `chk_no_self_friend` CHECK (`requesterID` <> `addresseeID`)
+  CONSTRAINT `fk_friends_addressee` FOREIGN KEY (`addresseeID`) REFERENCES `users` (`userID`) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- Blocks table (ON DELETE CASCADE - delete block records when user deleted)
@@ -53,15 +54,13 @@ CREATE TABLE IF NOT EXISTS blocks (
     CONSTRAINT fk_blocks_blocked
         FOREIGN KEY (blockedID) REFERENCES users(userID)
         ON DELETE CASCADE
-        ON UPDATE NO ACTION,
-    CONSTRAINT chk_no_self_block
-        CHECK (userID <> blockedID)
+        ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- Servers table: supports public/private, owner is admin (references users.userID)
 CREATE TABLE IF NOT EXISTS servers (
   serverID INT(11) NOT NULL AUTO_INCREMENT,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) UNIQUE NOT NULL,
   ownerID INT(11) NULL,
   is_public BOOLEAN NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -89,7 +88,7 @@ CREATE TABLE server_members (
     FOREIGN KEY (serverID) REFERENCES servers(serverID)
     ON DELETE CASCADE
     ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;f8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 DROP TABLE IF EXISTS server_roles;
 CREATE TABLE server_roles (
@@ -135,7 +134,7 @@ CREATE TABLE server_member_roles (
 
 -- Server invites: tracks pending invites for private servers
 DROP TABLE IF EXISTS server_invites;
-CEATE TABLE server_invites (
+CREATE TABLE server_invites (
   inviteID INT NOT NULL AUTO_INCREMENT,
   serverID INT NOT NULL,
   invitedID INT NOT NULL,
@@ -214,9 +213,7 @@ CREATE TABLE direct_conversations (
   CONSTRAINT fk_direct_conversations_user_two
     FOREIGN KEY (userTwoID) REFERENCES users(userID)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT chk_direct_conversations_order
-    CHECK (userOneID < userTwoID)
+    ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 DROP TABLE IF EXISTS messages;
@@ -246,14 +243,7 @@ CREATE TABLE messages (
   CONSTRAINT fk_messages_sender
     FOREIGN KEY (senderID) REFERENCES users(userID)
     ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT chk_messages_target
-    CHECK (
-      (channelID IS NOT NULL AND conversationID IS NULL) OR
-      (channelID IS NULL AND conversationID IS NOT NULL)
-    ),
-  CONSTRAINT chk_messages_payload
-    CHECK (message_text IS NOT NULL OR image_data IS NOT NULL)
+    ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 DELIMITER $$
@@ -305,4 +295,63 @@ BEGIN
      OR (requesterID = NEW.blockedID AND addresseeID = NEW.userID);
 END$$
 
+-- 1. Prevent self-friend
+CREATE TRIGGER trg_friends_no_self
+BEFORE INSERT ON friends
+FOR EACH ROW
+BEGIN
+  IF NEW.requesterID = NEW.addresseeID THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Cannot friend yourself';
+  END IF;
+END$$
+
+-- 2. Prevent self-block
+CREATE TRIGGER trg_blocks_no_self
+BEFORE INSERT ON blocks
+FOR EACH ROW
+BEGIN
+  IF NEW.userID = NEW.blockedID THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Cannot block yourself';
+  END IF;
+END$$
+
+-- 3. Enforce conversation ordering
+CREATE TRIGGER trg_direct_conversations_order
+BEFORE INSERT ON direct_conversations
+FOR EACH ROW
+BEGIN
+  IF NEW.userOneID >= NEW.userTwoID THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'userOneID must be less than userTwoID';
+  END IF;
+END$$
+
+-- 4. Validate message target (channel XOR conversation)
+CREATE TRIGGER trg_messages_target
+BEFORE INSERT ON messages
+FOR EACH ROW
+BEGIN
+  IF NOT (
+    (NEW.channelID IS NOT NULL AND NEW.conversationID IS NULL) OR
+    (NEW.channelID IS NULL AND NEW.conversationID IS NOT NULL)
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Message must have either channelID or conversationID (not both)';
+  END IF;
+END$$
+
+-- 5. Validate message payload
+CREATE TRIGGER trg_messages_payload
+BEFORE INSERT ON messages
+FOR EACH ROW
+BEGIN
+  IF NEW.message_text IS NULL AND NEW.image_data IS NULL THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Message must contain text or image';
+  END IF;
+END$$
+
 DELIMITER ;
+;

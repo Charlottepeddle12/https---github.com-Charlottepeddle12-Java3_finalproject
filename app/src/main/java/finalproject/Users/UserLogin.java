@@ -63,7 +63,13 @@ public class UserLogin implements Serializable{
         
         System.out.println(token);
     }
-
+    public String login() {
+            updateToken();
+            if (token != null && userId > 0) {
+                return "dashboard.xhtml?faces-redirect=true";
+            }
+            return null; 
+    }
     public void updateToken() {
         if (conn == null) {
             message = "Database connection is not available.";
@@ -112,11 +118,12 @@ public class UserLogin implements Serializable{
         }
     }
 
-    public void logout() {
+    public String logout() {
         token = null;
         userId = 0;
         userPassword = null;
         message = "Logged out.";
+        return "login.xhtml?faces-redirect=true";
     }
 
     public String getUserName() {

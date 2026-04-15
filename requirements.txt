@@ -11,6 +11,7 @@ Anyone in the server has access to all channels in that server, but only users w
 User Roles in servers: Admin, Invite Permission in Server, Kick Permission from Server, Create Text Channel Permission, Membership (no permissions).
 When a user is deleted, their memberships and invites are removed.
 If a server is deleted, all channels and memberships and invites for that server are removed.
+below all are server specifc:
 Buttons: Load Invites and Clear Invites.
 Buttons: Accept and Decline the invite. Can be beside each invite in the list of invites. 
 Button: Invite User, which opens a prompt to enter username to invite to server. Will be disabled if user doesn't have invite permissions. Also will not let send permission to someone who is blocked by the user or has blocked the user- it will say username invalid.
@@ -100,3 +101,4 @@ Constraint: Message must belong to either a channel or a conversation, not both.
 trg_servers_after_insert_bootstrap: When a server is created, default roles and memberships are set up.
 trg_server_members_after_insert_assign_default_role: When a member joins, they get the default role.
 trg_blocks_after_insert_remove_friendship: Blocking a user deletes any friendship between them.
+

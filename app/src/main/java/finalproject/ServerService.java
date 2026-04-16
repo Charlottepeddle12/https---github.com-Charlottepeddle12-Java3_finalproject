@@ -119,7 +119,7 @@ public class ServerService implements Serializable {
                 "SELECT ownerID FROM servers WHERE serverID = ?;")) {
             stmt.setInt(1, serverID);
             ResultSet rs = stmt.executeQuery();
-            if (rs.first()) {
+            if (rs.next()) {
                 if (rs.getInt("ownerID") == login.getUserId()) {
                     System.out.println("[ServerService] Attempting to delete server: " + serverName + ", ownerId="
                             + login.getUserId() + ", publicServer=" + publicServer);
@@ -151,9 +151,96 @@ public class ServerService implements Serializable {
         }
     }
 
-    //Server Member Role Permission
-    public void givePermission(){
-          
+    // Server Member Role Permission
+    public void givePermission(String memberUsername, String serverName, String roleName) {
+        if (conn == null || login == null) {
+            message = "Not connected to database or user not logged in.";
+        }
+        System.out.println("[ServerService] givePermission called");
+        if (serverName == null || serverName.trim().isEmpty()) {
+            message = "Server name cannot be empty.";
+            System.out.println("[ServerService] Server name is empty");
+            return;
+        }
+        else if (roleName == null || roleName.trim().isEmpty()) {
+            message = "Role name cannot be empty.";
+            System.out.println("[ServerService] Role name is empty");
+            return;
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT ownerID FROM servers WHERE name = ?;")) {
+            stmt.setString(1, serverName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int serverID = rs.getInt("serverID");
+                if (rs.getInt("ownerID") == login.getUserId()) {
+                    try (PreparedStatement getUserStmt = conn.prepareStatement(
+                            "SELECT userID FROM users WHERE username = ?;");) {
+                        getUserStmt.setString(1, memberUsername);
+                        ResultSet userRS = getUserStmt.executeQuery();
+                        if (userRS.next()) {
+                            int memberuserID = userRS.getInt("userID");
+                            try (
+                                    PreparedStatement isUserInDBStmt = conn.prepareStatement(
+                                            "SELECT * FROM server_members WHERE userID = ? AND serverID = ?;")) {
+                                isUserInDBStmt.setInt(1, memberuserID);
+                                isUserInDBStmt.setInt(2, serverID);
+                                ResultSet userInDBRS = isUserInDBStmt.executeQuery();
+                                if (userInDBRS.next()) {
+                                    try (
+                                            PreparedStatement getRoleStmt = conn.prepareStatement(
+                                                    "SELECT roleID FROM server_roles WHERE role_name = ? AND serverID = ?;")) {
+                                        getRoleStmt.setString(1, roleName);
+                                        getRoleStmt.setInt(2, serverID);
+                                        ResultSet roleRS = getRoleStmt.executeQuery();
+                                        if (roleRS.next()) {
+                                            int roleID = roleRS.getInt("roleID");
+                                            try (
+                                                    PreparedStatement setuserRoleStmt = conn.prepareStatement(
+                                                            "INSERT INTO server_member_roles (userID, serverID, roleID) VALUES (?, ?, ?);")) {
+                                                setuserRoleStmt.setInt(1, memberuserID);
+                                                setuserRoleStmt.setInt(2, serverID);
+                                                setuserRoleStmt.setInt(3, roleID);
+                                                setuserRoleStmt.execute();
+                                                message = "[ServerService] " + memberUsername
+                                                        + " has been given the role of " + roleName + "!";
+                                            } catch (Exception e) {
+                                                message = "[ServerService] SQLException: " + e.getMessage();
+                                            }
+                                        } else {
+                                            message = "[ServerService] " + roleName + " does not exist.";
+                                            return;
+                                        }
+                                    } catch (SQLException e) {
+                                        message = "[ServerService] SQLException: " + e.getMessage();
+                                    }
+                                } else {
+                                    message = "[ServerService] " + memberUsername + " is not in " + serverName + ".";
+                                    return;
+                                }
+                            } catch (SQLException e) {
+                                message = "[ServerService] SQLException: " + e.getMessage();
+                            }
+                        } else {
+                            message = "[ServerService] No users with " + memberUsername + " exists.";
+                            return;
+                        }
+                    } catch (SQLException e) {
+                        message = "[ServerService] SQLException: " + e.getMessage();
+                    }
+
+                } else {
+                    message = "[ServerService] you to not have permission to grant roles in " + serverName + ".";
+                    return;
+                }
+            } else {
+                message ="[ServerService]" + serverName + "does not exist.";
+                return;
+            }
+        } catch (SQLException e) {
+            message = "[ServerService] SQLException: " + e.getMessage();
+        }
+
     }
 
     // Load User Servers

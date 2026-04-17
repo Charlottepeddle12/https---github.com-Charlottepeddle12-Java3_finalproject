@@ -5,6 +5,7 @@ import finalproject.Users.UserLogin;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import javax.naming.Context;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("serverBean")
-@RequestScoped
+@SessionScoped
 public class ServerService implements Serializable {
     @Inject
     private UserLogin login;
@@ -51,7 +52,7 @@ public class ServerService implements Serializable {
     private List<MemberPermissionView> permissionList = new ArrayList<>();
     private String permissionServerName;
     private String manageServerName;    
-
+    
     //  DB
     @PostConstruct
     public void openConnection() {
@@ -83,7 +84,10 @@ public class ServerService implements Serializable {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);   
             stmt.setInt(2, serverId); 
-            stmt.executeUpdate();
+            int rows = stmt.executeUpdate();
+            if (rows == 0) {
+                throw new SQLException("Insert failed - no rows added");
+            }
             boolean isPublic = false;
             String checkSql = "SELECT is_public FROM servers WHERE serverID = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
@@ -94,8 +98,9 @@ public class ServerService implements Serializable {
                 }
             }
             } catch (SQLException e) {
-                message = "Membership error: " + e.getMessage();
+                throw new RuntimeException("Membership error: " + e.getMessage());
             }
+        System.out.println("ADD MEMBERSHIP CALLED: server=" + serverId + " user=" + userId);
     }
     //  Server Creation
     public void createServer() {
@@ -225,8 +230,13 @@ public class ServerService implements Serializable {
                     return;
                 }
             }
-            addMembership(serverId, login.getUserId(), false);
-            joinPublicServerMessage = "Joined server successfully.";
+            try {
+                addMembership(serverId, login.getUserId(), false);
+                joinPublicServerMessage = "Joined server successfully.";
+            } catch (Exception e) {
+                joinPublicServerMessage = e.getMessage();
+                return;
+            }
         } catch (SQLException e) {
             joinPublicServerMessage = "Failed to join server: " + e.getMessage();
             e.printStackTrace();
@@ -265,17 +275,17 @@ public class ServerService implements Serializable {
         }
         boolean canInvite = false;
         if (isPublic) {
-            String memberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
-            try (PreparedStatement memberStmt = conn.prepareStatement(memberSql)) {
-                memberStmt.setInt(1, login.getUserId());
-                memberStmt.setInt(2, serverId);
-                try (ResultSet rs = memberStmt.executeQuery()) {
+            String permSql = "SELECT can_invite FROM server_member_permissions WHERE userID = ? AND serverID = ?";
+            try (PreparedStatement permStmt = conn.prepareStatement(permSql)) {
+                permStmt.setInt(1, login.getUserId());
+                permStmt.setInt(2, serverId);
+                try (ResultSet rs = permStmt.executeQuery()) {
                     if (rs.next()) {
                         canInvite = rs.getBoolean("can_invite");
                     }
                 }
             } catch (SQLException e) {
-                inviteMessage  = "Error checking membership: " + e.getMessage();
+                inviteMessage = "Error checking permissions: " + e.getMessage();
                 return;
             }
         } else {
@@ -1179,4 +1189,5 @@ public class ServerService implements Serializable {
     public void setManageServerName(String manageServerName) {
         this.manageServerName = manageServerName;
     }
+    
 }

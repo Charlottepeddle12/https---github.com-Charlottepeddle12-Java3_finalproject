@@ -135,16 +135,13 @@ DROP TABLE IF EXISTS server_member_permissions;
 CREATE TABLE server_member_permissions (
     userID INT NOT NULL,
     serverID INT NOT NULL,
-
     can_invite BOOLEAN DEFAULT FALSE,
     can_kick BOOLEAN DEFAULT FALSE,
     can_create_channel BOOLEAN DEFAULT FALSE,
     can_manage_roles BOOLEAN DEFAULT FALSE,
     can_delete_messages BOOLEAN DEFAULT FALSE,
     can_delete_server BOOLEAN DEFAULT FALSE,
-
     PRIMARY KEY (userID, serverID),
-
     CONSTRAINT fk_member_permissions_member
         FOREIGN KEY (userID, serverID)
         REFERENCES server_members(userID, serverID)

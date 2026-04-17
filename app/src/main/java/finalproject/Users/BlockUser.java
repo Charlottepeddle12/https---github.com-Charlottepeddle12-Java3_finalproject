@@ -15,12 +15,12 @@ import javax.sql.DataSource;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 @Named("blockUserBean")
-@SessionScoped
+@RequestScoped
 public class BlockUser implements Serializable {
     private Connection conn;
     private String blockedUserName;
@@ -39,6 +39,8 @@ public class BlockUser implements Serializable {
         } catch (NamingException | SQLException e) {
             message = e.getMessage();
         }
+        loadBlockedUsers();
+        message = null;
     }
 
     @PreDestroy
@@ -110,6 +112,7 @@ public class BlockUser implements Serializable {
                     if (rowsAffected == 1) {
                         message = "Blocked user " + blockedUserName + ".";
                         loadBlockedUsers();
+                        blockedUserName = null;
                     } else {
                         message = "Block request failed.";
                     }
@@ -158,6 +161,7 @@ public class BlockUser implements Serializable {
                     if (rowsAffected == 1) {
                         message = "Unblocked user " + blockedUserName + ".";
                         loadBlockedUsers();
+                        blockedUserName = null; 
                     } else {
                         message = "User is not currently blocked.";
                     }

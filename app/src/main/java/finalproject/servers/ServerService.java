@@ -4,12 +4,11 @@ package finalproject.servers;
 import finalproject.Users.UserLogin;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.*;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("serverBean")
-@SessionScoped
+@RequestScoped
 public class ServerService implements Serializable {
     @Inject
     private UserLogin login;
@@ -50,7 +49,8 @@ public class ServerService implements Serializable {
     private String leaveServerName;
     private String permissionName;
     private List<MemberPermissionView> permissionList = new ArrayList<>();
-    
+    private String permissionServerName;
+    private String manageServerName;    
 
     //  DB
     @PostConstruct
@@ -62,6 +62,14 @@ public class ServerService implements Serializable {
         } catch (Exception e) {
             message = e.getMessage();
         }
+        message = null;
+        createMessage = null;
+        inviteMessage = null;
+        kickMessage = null;
+        transferMessage = null;
+        leaveMessage = null;
+        deleteServerMessage = null;
+        joinPublicServerMessage = null;
     }
 
     @PreDestroy
@@ -119,8 +127,14 @@ public class ServerService implements Serializable {
                 }
             }
         } catch (SQLException e) {
-            createMessage  = e.getMessage();
+            if (e.getMessage().contains("Duplicate entry")) {
+                createMessage = "Server name already exists. Please choose another name.";
+            } else {
+                createMessage = "Error creating server.";
+            }
         }
+        serverName = null;
+        publicServer = false;
     }
     //  Load User Servers 
     public void loadUserServers() {
@@ -331,6 +345,8 @@ public class ServerService implements Serializable {
                 inviteMessage  = "Failed to send invite: " + e.getMessage();
             }
         }
+        inviteServerName = null;
+        inviteTargetUserName = null;
     }
     //  load Invites for User
     public List<Invite> loadInvites() {
@@ -484,6 +500,8 @@ public class ServerService implements Serializable {
         } catch (SQLException e) {
             kickMessage  = "Error: " + e.getMessage();
         }
+        kickServerName = null;
+        kickTargetUserName = null;
     }
     //transfer ownership of server 
     public void transferServerOwnership() {
@@ -563,12 +581,18 @@ public class ServerService implements Serializable {
         } catch (SQLException e) {
             transferMessage = "Error: " + e.getMessage();
         }
+        transferServerName = null;
+        transferTargetUserName = null;
     }
     //leave server
     public void leaveServer() {
         leaveMessage = "";
         if (conn == null || login == null) {
             leaveMessage = "Not connected.";
+            return;
+        }
+        if (leaveServerName == null || leaveServerName.trim().isEmpty()) {
+            leaveMessage = "Server name required.";
             return;
         }
         try {
@@ -605,6 +629,7 @@ public class ServerService implements Serializable {
         } catch (SQLException e) {
             leaveMessage = "Error: " + e.getMessage();
         }
+        leaveServerName = null;
     }
     //has permission
     public boolean hasPermission(int serverId, String permissionColumn) {
@@ -734,13 +759,27 @@ public class ServerService implements Serializable {
             grantRemovePermisionMessage = "Not connected.";
             return;
         }
+        if (manageServerName == null || manageServerName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Server name required.";
+            return;
+        }
+
+        if (targetUserName == null || targetUserName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Username required.";
+            return;
+        }
+
+        if (permissionName == null || permissionName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Please select a permission.";
+            return;
+        }
         int serverId = -1;
         int ownerId = -1;
         int targetUserId = -1;
         try {
             String serverSql = "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)";
             PreparedStatement stmt = conn.prepareStatement(serverSql);
-            stmt.setString(1, serverName.trim());
+            stmt.setString(1, manageServerName.trim());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 serverId = rs.getInt("serverID");
@@ -811,13 +850,27 @@ public class ServerService implements Serializable {
             grantRemovePermisionMessage = "Not connected.";
             return;
         }
+        if (manageServerName == null || manageServerName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Server name required.";
+            return;
+        }
+
+        if (targetUserName == null || targetUserName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Username required.";
+            return;
+        }
+
+        if (permissionName == null || permissionName.trim().isEmpty()) {
+            grantRemovePermisionMessage = "Please select a permission.";
+            return;
+        }
         int serverId = -1;
         int ownerId = -1;
         int targetUserId = -1;
         try {
             String serverSql = "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)";
             PreparedStatement stmt = conn.prepareStatement(serverSql);
-            stmt.setString(1, serverName.trim());
+            stmt.setString(1, manageServerName.trim());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 serverId = rs.getInt("serverID");
@@ -889,11 +942,15 @@ public class ServerService implements Serializable {
             permissionMessage = "Not connected.";
             return;
         }
+        if (permissionServerName == null || permissionServerName.trim().isEmpty()) {
+            permissionMessage = "Server name required.";
+            return;
+        }
         int serverId = -1;
         try {
             String serverSql = "SELECT serverID FROM servers WHERE LOWER(name) = LOWER(?)";
             PreparedStatement stmt = conn.prepareStatement(serverSql);
-            stmt.setString(1, serverName.trim());
+            stmt.setString(1, permissionServerName.trim());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 serverId = rs.getInt("serverID");
@@ -1109,5 +1166,17 @@ public class ServerService implements Serializable {
     }
     public void setGrantRemovePermisionMessage(String grantRemovePermisionMessage) {
         this.grantRemovePermisionMessage = grantRemovePermisionMessage;
+    }
+    public String getPermissionServerName() {
+        return permissionServerName;
+    }
+    public void setPermissionServerName(String permissionServerName) {
+        this.permissionServerName = permissionServerName;
+    }
+    public String getManageServerName() {
+        return manageServerName;
+    }
+    public void setManageServerName(String manageServerName) {
+        this.manageServerName = manageServerName;
     }
 }

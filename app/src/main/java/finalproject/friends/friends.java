@@ -16,12 +16,12 @@ import javax.sql.DataSource;
 import finalproject.Users.UserLogin;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 @Named("friendsBean")
-@SessionScoped
+@RequestScoped
 public class Friends implements Serializable {
 	private Connection conn;
 	private String sendFriendUserName;
@@ -46,6 +46,11 @@ public class Friends implements Serializable {
 		} catch (NamingException | SQLException e) {
 			sendMessage = e.getMessage();
 		}
+		loadFriendNames();
+		loadReceivedFriendRequests();
+		loadSentFriendRequests();
+		sendMessage = null;
+		acceptMessage = null;
 	}
 
 	@PreDestroy

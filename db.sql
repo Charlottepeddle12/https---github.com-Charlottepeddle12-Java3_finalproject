@@ -131,7 +131,26 @@ CREATE TABLE server_member_roles (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+DROP TABLE IF EXISTS server_member_permissions;
+CREATE TABLE server_member_permissions (
+    userID INT NOT NULL,
+    serverID INT NOT NULL,
 
+    can_invite BOOLEAN DEFAULT FALSE,
+    can_kick BOOLEAN DEFAULT FALSE,
+    can_create_channel BOOLEAN DEFAULT FALSE,
+    can_manage_roles BOOLEAN DEFAULT FALSE,
+    can_delete_messages BOOLEAN DEFAULT FALSE,
+    can_delete_server BOOLEAN DEFAULT FALSE,
+
+    PRIMARY KEY (userID, serverID),
+
+    CONSTRAINT fk_member_permissions_member
+        FOREIGN KEY (userID, serverID)
+        REFERENCES server_members(userID, serverID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 -- Server invites: tracks pending invites for private servers
 DROP TABLE IF EXISTS server_invites;
 CREATE TABLE server_invites (
@@ -252,38 +271,11 @@ CREATE TRIGGER trg_servers_after_insert_bootstrap
 AFTER INSERT ON servers
 FOR EACH ROW
 BEGIN
-  INSERT INTO server_roles (
-    serverID,
-    role_name,
-    is_system_role,
-    is_default_role,
-    can_invite,
-    can_kick,
-    can_create_channel,
-    can_manage_roles,
-    can_delete_messages,
-    can_delete_server
-  ) VALUES
-    (NEW.serverID, 'Admin', TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
-    (NEW.serverID, 'Member', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
-
+  
   INSERT INTO server_members (userID, serverID)
   VALUES (NEW.ownerID, NEW.serverID);
 
-  INSERT INTO server_member_roles (userID, serverID, roleID)
-  SELECT NEW.ownerID, NEW.serverID, roleID
-  FROM server_roles
-  WHERE serverID = NEW.serverID AND role_name = 'Admin';
-END$$
-
-CREATE TRIGGER trg_server_members_after_insert_assign_default_role
-AFTER INSERT ON server_members
-FOR EACH ROW
-BEGIN
-  INSERT IGNORE INTO server_member_roles (userID, serverID, roleID)
-  SELECT NEW.userID, NEW.serverID, roleID
-  FROM server_roles
-  WHERE serverID = NEW.serverID AND is_default_role = TRUE;
+  
 END$$
 
 CREATE TRIGGER trg_blocks_after_insert_remove_friendship
@@ -351,6 +343,43 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Message must contain text or image';
   END IF;
+END$$
+-- 6
+
+CREATE TRIGGER trg_server_members_permissions
+AFTER INSERT ON server_members
+FOR EACH ROW
+BEGIN
+    DECLARE isOwner BOOLEAN;
+    DECLARE isPublic BOOLEAN;
+
+    -- Get server info
+    SELECT 
+        (ownerID = NEW.userID),
+        is_public
+    INTO isOwner, isPublic
+    FROM servers
+    WHERE serverID = NEW.serverID;
+
+    -- OWNER → full permissions
+    IF isOwner THEN
+        INSERT INTO server_member_permissions
+        (userID, serverID, can_invite, can_kick, can_create_channel, can_manage_roles, can_delete_messages, can_delete_server)
+        VALUES (NEW.userID, NEW.serverID, 1,1,1,1,1,1);
+
+    -- PUBLIC MEMBER → only invite
+    ELSEIF isPublic THEN
+        INSERT INTO server_member_permissions
+        (userID, serverID, can_invite, can_kick, can_create_channel, can_manage_roles, can_delete_messages, can_delete_server)
+        VALUES (NEW.userID, NEW.serverID, 1,0,0,0,0,0);
+
+    -- PRIVATE MEMBER → no permissions
+    ELSE
+        INSERT INTO server_member_permissions
+        (userID, serverID, can_invite, can_kick, can_create_channel, can_manage_roles, can_delete_messages, can_delete_server)
+        VALUES (NEW.userID, NEW.serverID, 0,0,0,0,0,0);
+    END IF;
+
 END$$
 
 DELIMITER ;

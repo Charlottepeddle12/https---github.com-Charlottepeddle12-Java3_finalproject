@@ -26,7 +26,17 @@ public class ServerService implements Serializable {
     private int serverID;
     private String serverName;
     private boolean publicServer;
-    private String message = "";
+    private String message;
+    private String createMessage;
+    private String inviteMessage;
+    private String kickMessage;
+    private String transferMessage;
+    private String leaveMessage;
+    private String permissionMessage;
+    private String deleteServerMessage;
+    private String joinPublicServerMessage;
+    private String loadInviteMessage;
+    private String grantRemovePermisionMessage;
     private String targetUserName;
     private int inviteID;
     private List<Server> servers = new ArrayList<>();
@@ -38,6 +48,10 @@ public class ServerService implements Serializable {
     private String transferServerName;
     private String transferTargetUserName;
     private String leaveServerName;
+    private String permissionName;
+    private List<MemberPermissionView> permissionList = new ArrayList<>();
+    
+
     //  DB
     @PostConstruct
     public void openConnection() {
@@ -55,47 +69,62 @@ public class ServerService implements Serializable {
         try { if (conn != null) conn.close(); } catch (Exception ignored) {}
     }
     // Helper method to add a user as a member to a server
-    private void addMembership(int serverId, int userId) {
+    private void addMembership(int serverId, int userId, boolean isOwner) {
         String sql = "INSERT INTO server_members (userID, serverID) VALUES (?, ?)";
+        System.out.println("ADD MEMBERSHIP CALLED: server=" + serverId + " user=" + userId);
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);   
             stmt.setInt(2, serverId); 
             stmt.executeUpdate();
-        } catch (SQLException e) {
-            message = "Membership error: " + e.getMessage();
-        }
+            boolean isPublic = false;
+            String checkSql = "SELECT is_public FROM servers WHERE serverID = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, serverId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    isPublic = rs.getBoolean("is_public");
+                }
+            }
+            } catch (SQLException e) {
+                message = "Membership error: " + e.getMessage();
+            }
     }
     //  Server Creation
     public void createServer() {
+        createMessage  = "";
+        if (conn == null || login == null) {
+            createMessage  = "Not connected to database or user not logged in.";
+            return;
+        }
         if (serverName == null || serverName.trim().isEmpty()) {
-            message = "Server name cannot be empty.";
+            createMessage  = "Server name cannot be empty.";
             return;
         }
         try (PreparedStatement stmt = conn.prepareStatement(
                 "INSERT INTO servers (name, ownerId, is_public) VALUES (?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, serverName);
+            stmt.setString(1, serverName.trim());
             stmt.setInt(2, login.getUserId());
             stmt.setBoolean(3, publicServer);
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
-                message = "Creating server failed, no rows affected.";
+                createMessage  = "Creating server failed, no rows affected.";
                 return;
             }
             try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     int newServerID = generatedKeys.getInt(1);
-                    addMembership(newServerID, login.getUserId());
-                    message = "Server created successfully.";
+                    createMessage  = "Server created successfully.";
                 } else {
-                    message = "Creating server failed, no ID obtained.";
+                    createMessage  = "Creating server failed, no ID obtained.";
                 }
             }
         } catch (SQLException e) {
-            message = e.getMessage();
+            createMessage  = e.getMessage();
         }
     }
     //  Load User Servers 
     public void loadUserServers() {
+        message = "";
         servers.clear();
         if (conn == null || login == null) {
             message = "Not connected to database or user not logged in.";
@@ -124,6 +153,7 @@ public class ServerService implements Serializable {
     }
     //  Load Public Servers 
     public void loadPublicServers() {
+        message = "";
         publicServers.clear(); 
         if (conn == null || login == null) {
             message = "Not connected to database or user not logged in.";
@@ -152,44 +182,71 @@ public class ServerService implements Serializable {
     }
     // Join Public Server 
     public void joinPublicServer(int serverId) {
+        joinPublicServerMessage = "";
         if (conn == null || login == null) {
-            message = "Not connected to database or user not logged in.";
+            joinPublicServerMessage = "Not connected to database or user not logged in.";
             return;
         }
-        String sql = "INSERT INTO server_members (userID, serverID) VALUES (?, ?)";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, login.getUserId());
-            stmt.setInt(2, serverId);
-            stmt.executeUpdate();
-            message = "Joined server successfully.";
+        try {
+            String checkSql = "SELECT is_public FROM servers WHERE serverID = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setInt(1, serverId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (!rs.next()) {
+                    joinPublicServerMessage = "Server not found.";
+                    return;
+                }
+                if (!rs.getBoolean("is_public")) {
+                    joinPublicServerMessage = "This server is private. You need an invite.";
+                    return;
+                }
+            }
+            String existsSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
+            try (PreparedStatement existsStmt = conn.prepareStatement(existsSql)) {
+                existsStmt.setInt(1, login.getUserId());
+                existsStmt.setInt(2, serverId);
+                ResultSet rs = existsStmt.executeQuery();
+                if (rs.next()) {
+                    joinPublicServerMessage = "You are already a member of this server.";
+                    return;
+                }
+            }
+            addMembership(serverId, login.getUserId(), false);
+            joinPublicServerMessage = "Joined server successfully.";
         } catch (SQLException e) {
-            message = "Failed to join server: " + e.getMessage();
+            joinPublicServerMessage = "Failed to join server: " + e.getMessage();
+            e.printStackTrace();
         }
     }
     // Invite User to Server by server name and username
     public void inviteUserToServer() {
+        inviteMessage  = "";
         String serverName = this.inviteServerName;
         String targetUserName = this.inviteTargetUserName;
         if (conn == null || login == null) {
-            message = "Not connected to database or user not logged in.";
+            inviteMessage  = "Not connected to database or user not logged in.";
+            return;
+        }
+        if (inviteServerName == null || inviteServerName.trim().isEmpty()) {
+            inviteMessage  = "Server name required.";
             return;
         }
         int serverId = -1;
         boolean isPublic = false;
-        String getServerSql = "SELECT serverID, is_public FROM servers WHERE name = ?";
+        String getServerSql = "SELECT serverID, is_public FROM servers WHERE LOWER(name) = LOWER(?)";
         try (PreparedStatement serverStmt = conn.prepareStatement(getServerSql)) {
-            serverStmt.setString(1, serverName);
+            serverStmt.setString(1, serverName.trim());
             try (ResultSet rs = serverStmt.executeQuery()) {
                 if (rs.next()) {
                     serverId = rs.getInt("serverID");
                     isPublic = rs.getBoolean("is_public");
                 } else {
-                    message = "Server not found.";
+                    inviteMessage  = "Server not found.";
                     return;
                 }
             }
         } catch (SQLException e) {
-            message = "Error finding server: " + e.getMessage();
+            inviteMessage  = "Error finding server: " + e.getMessage();
             return;
         }
         boolean canInvite = false;
@@ -199,45 +256,65 @@ public class ServerService implements Serializable {
                 memberStmt.setInt(1, login.getUserId());
                 memberStmt.setInt(2, serverId);
                 try (ResultSet rs = memberStmt.executeQuery()) {
-                    canInvite = rs.next();
+                    if (rs.next()) {
+                        canInvite = rs.getBoolean("can_invite");
+                    }
                 }
             } catch (SQLException e) {
-                message = "Error checking membership: " + e.getMessage();
+                inviteMessage  = "Error checking membership: " + e.getMessage();
                 return;
             }
         } else {
-            String permSql = "SELECT 1 FROM server_member_roles smr " +
-                            "JOIN server_roles sr ON smr.roleID = sr.roleID " +
-                            "WHERE smr.userID = ? AND smr.serverID = ? AND sr.can_invite = TRUE";
+            String permSql = "SELECT can_invite FROM server_member_permissions WHERE userID = ? AND serverID = ?";
             try (PreparedStatement permStmt = conn.prepareStatement(permSql)) {
                 permStmt.setInt(1, login.getUserId());
                 permStmt.setInt(2, serverId);
                 try (ResultSet rs = permStmt.executeQuery()) {
-                    canInvite = rs.next();
+                    if (rs.next()) {
+                        canInvite = rs.getBoolean("can_invite");
+                    }
                 }
             } catch (SQLException e) {
-                message = "Error checking permissions: " + e.getMessage();
+                inviteMessage  = "Error checking permissions: " + e.getMessage();
                 return;
             }
         }
         if (!canInvite) {
-            message = "You do not have permission to invite users to this server.";
+            inviteMessage  = "You do not have permission to invite users to this server.";
             return;
         }
         int targetUserId = -1;
-        String getUserSql = "SELECT userID FROM users WHERE username = ?";
+        String getUserSql = "SELECT userID FROM users WHERE LOWER(username) = LOWER(?)";
         try (PreparedStatement userStmt = conn.prepareStatement(getUserSql)) {
             userStmt.setString(1, targetUserName);
             try (ResultSet rs = userStmt.executeQuery()) {
                 if (rs.next()) {
                     targetUserId = rs.getInt("userID");
                 } else {
-                    message = "User not found.";
+                    inviteMessage  = "User not found.";
                     return;
                 }
             }
         } catch (SQLException e) {
-            message = "Error finding user: " + e.getMessage();
+            inviteMessage  = "Error finding user: " + e.getMessage();
+            return;
+        }
+        if (targetUserId == login.getUserId()) {
+            inviteMessage  = "You cannot invite yourself.";
+            return;
+        }
+        String checkMemberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
+        try (PreparedStatement checkStmt = conn.prepareStatement(checkMemberSql)) {
+            checkStmt.setInt(1, targetUserId);
+            checkStmt.setInt(2, serverId);
+            try (ResultSet rsCheck = checkStmt.executeQuery()) {
+                if (rsCheck.next()) {
+                    inviteMessage  = "User is already a member of this server.";
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            inviteMessage  = "Error checking membership: " + e.getMessage();
             return;
         }
         String sql = "INSERT INTO server_invites (serverID, invitedID, invited_by) VALUES (?, ?, ?)";
@@ -246,20 +323,25 @@ public class ServerService implements Serializable {
             stmt.setInt(2, targetUserId);
             stmt.setInt(3, login.getUserId());
             stmt.executeUpdate();
-            message = "Invite sent successfully.";
+            inviteMessage  = "Invite sent successfully.";
         } catch (SQLException e) {
-            message = "Failed to send invite: " + e.getMessage();
+            if (e.getMessage().contains("uq_server_invites_target")) {
+                inviteMessage  = "User already has a pending invite.";
+            } else {
+                inviteMessage  = "Failed to send invite: " + e.getMessage();
+            }
         }
     }
     //  load Invites for User
     public List<Invite> loadInvites() {
+        loadInviteMessage = "";
         List<Invite> invites = new ArrayList<>();
         if (conn == null) {
-            message = "Not connected to database.";
+            loadInviteMessage = "Not connected to database.";
             return invites;
         }
         if (login == null) {
-            message = "User not logged in.";
+            loadInviteMessage = "User not logged in.";
             return invites;
         }
         int userId = login.getUserId();
@@ -282,17 +364,18 @@ public class ServerService implements Serializable {
                 }
             }
         } catch (SQLException e) {
-            message = "Failed to load invites: " + e.getMessage();
+            loadInviteMessage = "Failed to load invites: " + e.getMessage();
         }
         if (invites.isEmpty()) {
-            message = "No invites found for userId: " + userId;
+            loadInviteMessage = "No invites found for userId: " + userId;
         }
         return invites;
     }
     //Accept Invite
     public void acceptInvite(int inviteId) {
+        loadInviteMessage = "";
         if (conn == null || login == null) {
-            message = "Not connected to database or user not logged in.";
+            loadInviteMessage = "Not connected to database or user not logged in.";
             return;
         }
         int serverId = -1;
@@ -304,28 +387,29 @@ public class ServerService implements Serializable {
                 if (rs.next()) {
                     serverId = rs.getInt("serverID");
                 } else {
-                    message = "Invite not found.";
+                    loadInviteMessage = "Invite not found.";
                     return;
                 }
             }
         } catch (SQLException e) {
-            message = "Error finding invite: " + e.getMessage();
+            loadInviteMessage = "Error finding invite: " + e.getMessage();
             return;
         }
-        addMembership(serverId, login.getUserId());
+        addMembership(serverId, login.getUserId(), false);
         String deleteSql = "DELETE FROM server_invites WHERE inviteID = ?";
         try (PreparedStatement stmt = conn.prepareStatement(deleteSql)) {
             stmt.setInt(1, inviteId);
             stmt.executeUpdate();
-            message = "Invite accepted and joined server successfully.";
+            loadInviteMessage = "Invite accepted and joined server successfully.";
         } catch (SQLException e) {
-            message = "Failed to accept invite: " + e.getMessage();
+            loadInviteMessage = "Failed to accept invite: " + e.getMessage();
         }
     }
     // Decline Invite
-    public void declineInvite(int inviteId) {   
+    public void declineInvite(int inviteId) {  
+        loadInviteMessage = ""; 
         if (conn == null || login == null) {
-            message = "Not connected to database or user not logged in.";
+            loadInviteMessage = "Not connected to database or user not logged in.";
             return;
         }
         String deleteSql = "DELETE FROM server_invites WHERE inviteID = ? AND invitedID = ?";
@@ -334,130 +418,111 @@ public class ServerService implements Serializable {
             stmt.setInt(2, login.getUserId());
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
-                message = "Invite declined successfully.";
+                loadInviteMessage = "Invite declined successfully.";
             } else {
-                message = "Invite not found or you do not have permission to decline this invite.";
+                loadInviteMessage = "Invite not found or you do not have permission to decline this invite.";
             }
         } catch (SQLException e) {
-            message = "Failed to decline invite: " + e.getMessage();
+            loadInviteMessage = "Failed to decline invite: " + e.getMessage();
         }
     }
     //Kick User from Server 
     public void kickUserFromServer() {
+        kickMessage  = "";
         if (conn == null || login == null) {
-            message = "Not connected.";
+            kickMessage  = "Not connected.";
             return;
         }
-
         int serverId = -1;
         int targetUserId = -1;
-
         try {
-            // 1. find server ID
-            String serverSql = "SELECT serverID, is_public FROM servers WHERE name = ?";
+            String serverSql = "SELECT serverID, is_public FROM servers WHERE LOWER(name) = LOWER(?)";
             PreparedStatement stmt = conn.prepareStatement(serverSql);
-            stmt.setString(1, kickServerName);
+            stmt.setString(1, kickServerName.trim());
             ResultSet rs = stmt.executeQuery();
-
             boolean isPublic = false;
-
             if (rs.next()) {
                 serverId = rs.getInt("serverID");
                 isPublic = rs.getBoolean("is_public");
             } else {
-                message = "Server not found.";
+                kickMessage  = "Server not found.";
                 return;
             }
-
-            // ❌ block kicking in public server
             if (isPublic) {
-                message = "Cannot kick from public server.";
+                kickMessage  = "Cannot kick from public server.";
                 return;
             }
-
-            // 1.5 check permission
-            String permSql = "SELECT 1 FROM server_member_roles smr " +
-                            "JOIN server_roles sr ON smr.roleID = sr.roleID " +
-                            "WHERE smr.userID = ? AND smr.serverID = ? AND sr.can_kick = TRUE";
-
+            String permSql = "SELECT can_kick FROM server_member_permissions WHERE userID = ? AND serverID = ?";
             PreparedStatement permStmt = conn.prepareStatement(permSql);
             permStmt.setInt(1, login.getUserId()); // current user
             permStmt.setInt(2, serverId);
-
             ResultSet permRs = permStmt.executeQuery();
-
-            if (!permRs.next()) {
-                message = "You do not have permission to kick users.";
+            if (!permRs.next() || !permRs.getBoolean("can_kick")) {
+                kickMessage  = "You do not have permission to kick users.";
                 return;
             }
-                        // 2. find user ID
-            String userSql = "SELECT userID FROM users WHERE username = ?";
+            String userSql = "SELECT userID FROM users WHERE LOWER(username) = LOWER(?)";
             stmt = conn.prepareStatement(userSql);
-            stmt.setString(1, kickTargetUserName);
+            stmt.setString(1, kickTargetUserName.trim());
             rs = stmt.executeQuery();
-
             if (rs.next()) {
                 targetUserId = rs.getInt("userID");
             } else {
-                message = "User not found.";
+                kickMessage  = "User not found.";
                 return;
             }
-
-            // 3. delete membership
             String deleteSql = "DELETE FROM server_members WHERE userID = ? AND serverID = ?";
             stmt = conn.prepareStatement(deleteSql);
             stmt.setInt(1, targetUserId);
             stmt.setInt(2, serverId);
-
             int rows = stmt.executeUpdate();
-
             if (rows > 0) {
-                message = "User kicked successfully.";
+                kickMessage  = "User kicked successfully.";
             } else {
-                message = "User not in server.";
+                kickMessage  = "User not in server.";
             }
-
         } catch (SQLException e) {
-            message = "Error: " + e.getMessage();
+            kickMessage  = "Error: " + e.getMessage();
         }
     }
     //transfer ownership of server 
     public void transferServerOwnership() {
+        transferMessage = "";
         if (conn == null || login == null) {
-            message = "Not connected.";
+            transferMessage = "Not connected.";
             return;
         }
         int serverId = -1;
         int targetUserId = -1;
+        int oldOwnerId = -1;
         try {
             String serverSql = "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)";
             PreparedStatement stmt = conn.prepareStatement(serverSql);
             stmt.setString(1, transferServerName.trim());
             ResultSet rs = stmt.executeQuery();
-            int oldOwnerId;
             if (rs.next()) {
                 serverId = rs.getInt("serverID");
                 oldOwnerId = rs.getInt("ownerID");
                 if (oldOwnerId != login.getUserId()) {
-                    message = "You are not the owner.";
+                    transferMessage = "You are not the owner.";
                     return;
                 }
             } else {
-                message = "Server not found.";
+                transferMessage = "Server not found.";
                 return;
             }
-            String userSql = "SELECT userID FROM users WHERE username = ?";
+            String userSql = "SELECT userID FROM users WHERE LOWER(username) = LOWER(?)";
             stmt = conn.prepareStatement(userSql);
-            stmt.setString(1, transferTargetUserName);
+            stmt.setString(1, transferTargetUserName.trim());
             rs = stmt.executeQuery();
             if (rs.next()) {
                 targetUserId = rs.getInt("userID");
             } else {
-                message = "User not found.";
+                transferMessage = "User not found.";
                 return;
             }
             if (targetUserId == oldOwnerId) {
-                message = "You are already the owner.";
+                transferMessage = "You are already the owner.";
                 return;
             }
             String memberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
@@ -466,51 +531,44 @@ public class ServerService implements Serializable {
             stmt.setInt(2, serverId);
             rs = stmt.executeQuery();
             if (!rs.next()) {
-                message = "New owner must be a member.";
+                transferMessage = "New owner must be a member.";
                 return;
             }
-            String ensureMember = "INSERT IGNORE INTO server_members (userID, serverID) VALUES (?, ?)";
-            stmt = conn.prepareStatement(ensureMember);
+            String ensurePerm = "INSERT IGNORE INTO server_member_permissions (userID, serverID) VALUES (?, ?)";
+            stmt = conn.prepareStatement(ensurePerm);
             stmt.setInt(1, targetUserId);
             stmt.setInt(2, serverId);
             stmt.executeUpdate();
-            String updateSql = "UPDATE servers SET ownerID = ? WHERE serverID = ?";
+            String updateOwner = "UPDATE servers SET ownerID = ? WHERE serverID = ?";
+            stmt = conn.prepareStatement(updateOwner);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            stmt.executeUpdate();
+            String updateSql =  "UPDATE server_member_permissions SET " +
+                                "can_invite=1, can_kick=1, can_create_channel=1, " +
+                                "can_manage_roles=1, can_delete_messages=1, can_delete_server=1 " +
+                                "WHERE userID=? AND serverID=?";
             stmt = conn.prepareStatement(updateSql);
             stmt.setInt(1, targetUserId);
             stmt.setInt(2, serverId);
             stmt.executeUpdate();
-            String removeRoles = "DELETE FROM server_member_roles WHERE userID = ? AND serverID = ?";
-            stmt = conn.prepareStatement(removeRoles);
-            stmt.setInt(1, targetUserId);
-            stmt.setInt(2, serverId);
-            stmt.executeUpdate();
-            String giveAdmin = "INSERT INTO server_member_roles (userID, serverID, roleID) " +
-                    "SELECT ?, ?, roleID FROM server_roles WHERE serverID = ? AND role_name = 'Admin'";
-            stmt = conn.prepareStatement(giveAdmin);
-            stmt.setInt(1, targetUserId);
-            stmt.setInt(2, serverId);
-            stmt.setInt(3, serverId);
-            stmt.executeUpdate();
+            String removeRoles = "UPDATE server_member_permissions SET " +
+                                "can_kick=0, can_manage_roles=0, can_delete_messages=0, can_delete_server=0 " +
+                                "WHERE userID=? AND serverID=?";
             stmt = conn.prepareStatement(removeRoles);
             stmt.setInt(1, oldOwnerId);
             stmt.setInt(2, serverId);
             stmt.executeUpdate();
-            String giveMember = "INSERT INTO server_member_roles (userID, serverID, roleID) " +
-                    "SELECT ?, ?, roleID FROM server_roles WHERE serverID = ? AND is_default_role = TRUE";
-            stmt = conn.prepareStatement(giveMember);
-            stmt.setInt(1, oldOwnerId);
-            stmt.setInt(2, serverId);
-            stmt.setInt(3, serverId);
-            stmt.executeUpdate();
-            message = "Ownership transferred successfully.";
+            transferMessage = "Ownership transferred successfully.";
         } catch (SQLException e) {
-            message = "Error: " + e.getMessage();
+            transferMessage = "Error: " + e.getMessage();
         }
     }
     //leave server
     public void leaveServer() {
+        leaveMessage = "";
         if (conn == null || login == null) {
-            message = "Not connected.";
+            leaveMessage = "Not connected.";
             return;
         }
         try {
@@ -519,13 +577,13 @@ public class ServerService implements Serializable {
             stmt.setString(1, leaveServerName.trim());
             ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
-                message = "Server not found.";
+                leaveMessage = "Server not found.";
                 return;
             }
             int serverId = rs.getInt("serverID");
             int ownerId = rs.getInt("ownerID");
             if (ownerId == login.getUserId()) {
-                message = "You are the owner. Transfer ownership before leaving the server.";
+                leaveMessage = "You are the owner. Transfer ownership before leaving the server.";
                 return;
             }
             String checkSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
@@ -535,7 +593,7 @@ public class ServerService implements Serializable {
             rs = stmt.executeQuery();
 
             if (!rs.next()) {
-                message = "You are not a member of this server.";
+                leaveMessage = "You are not a member of this server.";
                 return;
             }
             String deleteSql = "DELETE FROM server_members WHERE userID = ? AND serverID = ?";
@@ -543,37 +601,40 @@ public class ServerService implements Serializable {
             stmt.setInt(1, login.getUserId());
             stmt.setInt(2, serverId);
             stmt.executeUpdate();
-            message = "Left server successfully.";
+            leaveMessage = "Left server successfully.";
         } catch (SQLException e) {
-            message = "Error: " + e.getMessage();
+            leaveMessage = "Error: " + e.getMessage();
         }
     }
     //has permission
     public boolean hasPermission(int serverId, String permissionColumn) {
-        if (conn == null || login == null) {
-            return false;
-        }
-        String sql = "SELECT 1 FROM server_member_roles smr " +
-                    "JOIN server_roles sr ON smr.roleID = sr.roleID " +
-                    "WHERE smr.userID = ? AND smr.serverID = ? AND sr." + permissionColumn + " = TRUE";
+        if (conn == null || login == null) return false;
+
+        String sql = "SELECT " + permissionColumn +
+                    " FROM server_member_permissions " +
+                    "WHERE userID = ? AND serverID = ?";
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, login.getUserId());
             stmt.setInt(2, serverId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBoolean(permissionColumn);
             }
         } catch (SQLException e) {
-            return false;
+            e.printStackTrace();
         }
+
+        return false;
     }
     //load server members 
     public List<String> loadServerMembers(int serverId) {
+        message = "";
         List<String> members = new ArrayList<>();
-
         if (conn == null || login == null) {
             return members;
         }
-
         try {
             String checkMemberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
             PreparedStatement stmt = conn.prepareStatement(checkMemberSql);
@@ -587,7 +648,7 @@ public class ServerService implements Serializable {
             String ownerSql = "SELECT ownerID FROM servers WHERE serverID = ?";
             stmt = conn.prepareStatement(ownerSql);
             stmt.setInt(1, serverId);
-             rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             boolean isAdmin = false;
             if (rs.next()) {
                 isAdmin = (rs.getInt("ownerID") == login.getUserId());
@@ -596,7 +657,6 @@ public class ServerService implements Serializable {
                 String sql = "SELECT u.username FROM users u " +
                             "JOIN server_members sm ON u.userID = sm.userID " +
                             "WHERE sm.serverID = ?";
-
                 stmt = conn.prepareStatement(sql);
                 stmt.setInt(1, serverId);
                 rs = stmt.executeQuery();
@@ -629,27 +689,28 @@ public class ServerService implements Serializable {
         return members;
     }
     // delete server by name (ONLY OWNER)
-    public void deleteServer() {
+    public void deleteServerByName(String name){
+        deleteServerMessage = "";
         if (conn == null || login == null) {
-            message = "Not connected.";
+            deleteServerMessage = "Not connected.";
             return;
         }
-        if (serverName == null || serverName.trim().isEmpty()) {
-            message = "Server name cannot be empty.";
+        if (name == null || name.trim().isEmpty()) {
+            deleteServerMessage = "Server name cannot be empty.";
             return;
         }
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)")) {
-            stmt.setString(1, serverName.trim());
+            stmt.setString(1, name.trim());
             ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
-                message = "Server not found.";
+                deleteServerMessage = "Server not found.";
                 return;
             }
             int serverId = rs.getInt("serverID");
             int ownerId = rs.getInt("ownerID");
             if (ownerId != login.getUserId()) {
-                message = "Only the owner can delete this server.";
+                deleteServerMessage = "Only the owner can delete this server.";
                 return;
             }
             try (PreparedStatement deleteStmt = conn.prepareStatement(
@@ -657,13 +718,248 @@ public class ServerService implements Serializable {
                 deleteStmt.setInt(1, serverId);
                 int rows = deleteStmt.executeUpdate();
                 if (rows > 0) {
-                    message = "Server deleted successfully.";
+                    deleteServerMessage = "Server deleted successfully.";
                 } else {
-                    message = "Delete failed.";
+                    deleteServerMessage = "Delete failed.";
                 }
             }
         } catch (SQLException e) {
-            message = "Error: " + e.getMessage();
+            deleteServerMessage = "Error: " + e.getMessage();
+        }
+    }
+    //grant role to user
+    public void givePermission() {
+        grantRemovePermisionMessage = "";
+        if (conn == null || login == null) {
+            grantRemovePermisionMessage = "Not connected.";
+            return;
+        }
+        int serverId = -1;
+        int ownerId = -1;
+        int targetUserId = -1;
+        try {
+            String serverSql = "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)";
+            PreparedStatement stmt = conn.prepareStatement(serverSql);
+            stmt.setString(1, serverName.trim());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                serverId = rs.getInt("serverID");
+                ownerId = rs.getInt("ownerID");
+            } else {
+                grantRemovePermisionMessage = "Server not found.";
+                return;
+            }
+            if (ownerId != login.getUserId()) {
+                grantRemovePermisionMessage = "You are not the owner.";
+                return;
+            }
+            String userSql = "SELECT userID FROM users WHERE LOWER(username) = LOWER(?)";
+            stmt = conn.prepareStatement(userSql);
+            stmt.setString(1, targetUserName.trim());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                targetUserId = rs.getInt("userID");
+            } else {
+                grantRemovePermisionMessage = "User not found.";
+                return;
+            }
+            String memberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
+            stmt = conn.prepareStatement(memberSql);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            rs = stmt.executeQuery();
+            if (!rs.next()) {
+                grantRemovePermisionMessage = "User is not a member.";
+                return;
+            }
+            List<String> validPermissions = List.of(
+                "can_invite",
+                "can_kick",
+                "can_create_channel",
+                "can_manage_roles",
+                "can_delete_messages",
+                "can_delete_server"
+            );
+            if (!validPermissions.contains(permissionName)) {
+                grantRemovePermisionMessage = "Permission does not exist.";
+                return;
+            }
+            if (permissionName.equals("can_delete_server") ||
+                permissionName.equals("can_delete_messages")) {
+                grantRemovePermisionMessage = "Only owner can have this permission.";
+                return;
+            }
+            String insertSql = "INSERT IGNORE INTO server_member_permissions (userID, serverID) VALUES (?, ?)";
+            stmt = conn.prepareStatement(insertSql);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            stmt.executeUpdate();
+            String updateSql = "UPDATE server_member_permissions SET " + permissionName + " = TRUE WHERE userID = ? AND serverID = ?";
+            stmt = conn.prepareStatement(updateSql);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            stmt.executeUpdate();
+            grantRemovePermisionMessage = "Permission granted successfully.";
+        } catch (SQLException e) {
+            grantRemovePermisionMessage = "Error: " + e.getMessage();
+        }
+    }
+    //remove permission from user
+    public void removePermission() {
+        grantRemovePermisionMessage = "";
+        if (conn == null || login == null) {
+            grantRemovePermisionMessage = "Not connected.";
+            return;
+        }
+        int serverId = -1;
+        int ownerId = -1;
+        int targetUserId = -1;
+        try {
+            String serverSql = "SELECT serverID, ownerID FROM servers WHERE LOWER(name) = LOWER(?)";
+            PreparedStatement stmt = conn.prepareStatement(serverSql);
+            stmt.setString(1, serverName.trim());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                serverId = rs.getInt("serverID");
+                ownerId = rs.getInt("ownerID");
+            } else {
+                grantRemovePermisionMessage = "Server not found.";
+                return;
+            }
+            if (ownerId != login.getUserId()) {
+                grantRemovePermisionMessage = "Only the owner can remove permissions.";
+                return;
+            }
+            String userSql = "SELECT userID FROM users WHERE LOWER(username) = LOWER(?)";
+            stmt = conn.prepareStatement(userSql);
+            stmt.setString(1, targetUserName.trim());
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                targetUserId = rs.getInt("userID");
+            } else {
+                grantRemovePermisionMessage = "User not found.";
+                return;
+            }
+            if (targetUserId == ownerId) {
+                grantRemovePermisionMessage = "Owner cannot remove their own permissions.";
+                return;
+            }
+
+            // 4. Check membership
+            String memberSql = "SELECT 1 FROM server_members WHERE userID = ? AND serverID = ?";
+            stmt = conn.prepareStatement(memberSql);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            rs = stmt.executeQuery();
+            if (!rs.next()) {
+                grantRemovePermisionMessage = "User is not a member of this server.";
+                return;
+            }
+            List<String> validPermissions = List.of(
+                "can_invite",
+                "can_kick",
+                "can_create_channel",
+                "can_manage_roles",
+                "can_delete_messages",
+                "can_delete_server"
+            );
+            if (!validPermissions.contains(permissionName)) {
+                grantRemovePermisionMessage = "Permission does not exist.";
+                return;
+            }
+            String updateSql = "UPDATE server_member_permissions SET " + permissionName + " = FALSE WHERE userID = ? AND serverID = ?";
+            stmt = conn.prepareStatement(updateSql);
+            stmt.setInt(1, targetUserId);
+            stmt.setInt(2, serverId);
+            int rows = stmt.executeUpdate();
+            if (rows > 0) {
+                grantRemovePermisionMessage = "Permission removed successfully.";
+            } else {
+                grantRemovePermisionMessage = "No permission found to remove.";
+            }
+        } catch (SQLException e) {
+            grantRemovePermisionMessage = "Error: " + e.getMessage();
+        }
+    }
+    //load permisions in a server
+    public void loadPermissions() {
+        permissionMessage = "";
+        permissionList.clear();
+        if (conn == null || login == null) {
+            permissionMessage = "Not connected.";
+            return;
+        }
+        int serverId = -1;
+        try {
+            String serverSql = "SELECT serverID FROM servers WHERE LOWER(name) = LOWER(?)";
+            PreparedStatement stmt = conn.prepareStatement(serverSql);
+            stmt.setString(1, serverName.trim());
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                serverId = rs.getInt("serverID");
+            } else {
+                permissionMessage = "Server not found.";
+                return;
+            }
+            int ownerId = -1;
+            String ownerSql = "SELECT ownerID FROM servers WHERE serverID = ?";
+            PreparedStatement ownerStmt = conn.prepareStatement(ownerSql);
+            ownerStmt.setInt(1, serverId);
+            ResultSet ownerRs = ownerStmt.executeQuery();
+            if (ownerRs.next()) {
+                ownerId = ownerRs.getInt("ownerID");
+            }
+            boolean isOwner = (ownerId == login.getUserId());
+            String sql;
+            if (isOwner) {
+                sql =
+                    "SELECT u.username, " +
+                    "COALESCE(p.can_invite, FALSE) AS can_invite, " +
+                    "COALESCE(p.can_kick, FALSE) AS can_kick, " +
+                    "COALESCE(p.can_create_channel, FALSE) AS can_create_channel, " +
+                    "COALESCE(p.can_manage_roles, FALSE) AS can_manage_roles, " +
+                    "COALESCE(p.can_delete_messages, FALSE) AS can_delete_messages, " +
+                    "COALESCE(p.can_delete_server, FALSE) AS can_delete_server " +
+                    "FROM server_members sm " +
+                    "JOIN users u ON sm.userID = u.userID " +
+                    "LEFT JOIN server_member_permissions p " +
+                    "ON sm.userID = p.userID AND sm.serverID = p.serverID " +
+                    "WHERE sm.serverID = ?";
+                stmt = conn.prepareStatement(sql);
+                stmt.setInt(1, serverId);
+            } else {
+                sql =
+                    "SELECT u.username, " +
+                    "COALESCE(p.can_invite, FALSE) AS can_invite, " +
+                    "COALESCE(p.can_kick, FALSE) AS can_kick, " +
+                    "COALESCE(p.can_create_channel, FALSE) AS can_create_channel, " +
+                    "COALESCE(p.can_manage_roles, FALSE) AS can_manage_roles, " +
+                    "COALESCE(p.can_delete_messages, FALSE) AS can_delete_messages, " +
+                    "COALESCE(p.can_delete_server, FALSE) AS can_delete_server " +
+                    "FROM server_members sm " +
+                    "JOIN users u ON sm.userID = u.userID " +
+                    "LEFT JOIN server_member_permissions p " +
+                    "ON sm.userID = p.userID AND sm.serverID = p.serverID " +
+                    "WHERE sm.serverID = ? AND sm.userID = ?";
+                stmt = conn.prepareStatement(sql);
+                stmt.setInt(1, serverId);
+                stmt.setInt(2, login.getUserId());
+            }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                MemberPermissionView mp = new MemberPermissionView();
+                mp.setUsername(rs.getString("username"));
+                mp.setCanInvite(rs.getBoolean("can_invite"));
+                mp.setCanKick(rs.getBoolean("can_kick"));
+                mp.setCanCreateChannel(rs.getBoolean("can_create_channel"));
+                mp.setCanManageRoles(rs.getBoolean("can_manage_roles"));
+                mp.setCanDeleteMessages(rs.getBoolean("can_delete_messages"));
+                mp.setCanDeleteServer(rs.getBoolean("can_delete_server"));
+                permissionList.add(mp);
+            }
+            permissionMessage = "Permissions loaded successfully.";
+        } catch (SQLException e) {
+            permissionMessage = "Error: " + e.getMessage();
         }
     }
     //  Getters and Setters 
@@ -738,5 +1034,80 @@ public class ServerService implements Serializable {
     }
     public void setLeaveServerName(String leaveServerName) {
         this.leaveServerName = leaveServerName;
+    }
+    public String getPermissionName() {
+        return permissionName;
+    }
+    public void setPermissionName(String permissionName) {
+        this.permissionName = permissionName;
+    }
+    public List<MemberPermissionView> getPermissionList() {
+        return permissionList;
+    }
+    public String getTargetUserName() {
+        return targetUserName;
+    }
+    public void setTargetUserName(String targetUserName) {
+        this.targetUserName = targetUserName;
+    }
+    public String getCreateMessage() {
+        return createMessage;
+    }
+    public void setCreateMessage(String createMessage) {
+        this.createMessage = createMessage;
+    }
+    public String getInviteMessage() {
+        return inviteMessage;
+    }
+    public void setInviteMessage(String inviteMessage) {
+        this.inviteMessage = inviteMessage;
+    }
+    public String getKickMessage() {
+        return kickMessage;
+    }
+    public void setKickMessage(String kickMessage) {
+        this.kickMessage = kickMessage;
+    }
+    public String getTransferMessage() {
+        return transferMessage;
+    }
+    public void setTransferMessage(String transferMessage) {
+        this.transferMessage = transferMessage;
+    }
+    public String getLeaveMessage() {
+        return leaveMessage;
+    }
+    public void setLeaveMessage(String leaveMessage) {
+        this.leaveMessage = leaveMessage;
+    }
+    public String getPermissionMessage() {
+        return permissionMessage;
+    }
+    public void setPermissionMessage(String permissionMessage) {
+        this.permissionMessage = permissionMessage;
+    }
+    public String getDeleteServerMessage() {
+        return deleteServerMessage;
+    }
+    public void setDeleteServerMessage(String deleteServerMessage) {
+        this.deleteServerMessage = deleteServerMessage;
+    }
+    public String getJoinPublicServerMessage() {
+        return joinPublicServerMessage;
+    }
+    public void setJoinPublicServerMessage(String joinPublicServerMessage) {
+        this.joinPublicServerMessage = joinPublicServerMessage;
+    }
+    public String getLoadInviteMessage() {
+        return loadInviteMessage;
+    }
+    public void setLoadInviteMessage(String loadInviteMessage) {
+        this.loadInviteMessage = loadInviteMessage;
+    }
+    public String getGrantRemovePermisionMessage() {
+        return grantRemovePermisionMessage;
+    }
+    public void setGrantRemovePermisionMessage(String grantRemovePermisionMessage) {
+        this.grantRemovePermisionMessage = grantRemovePermisionMessage;
     }
 }

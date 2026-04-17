@@ -6,16 +6,18 @@ public class Channel implements Serializable {
     private int channelID;
     private int serverID;
     private String name;
+    private Integer createdBy;
     private Timestamp createdAt;
 
     public Channel() {}
 
-    public Channel(int channelID, int serverID, String name, Timestamp createdAt) {
-        this.channelID = channelID;
-        this.serverID = serverID;
-        this.name = name;
-        this.createdAt = createdAt;
-    }
+    // public Channel(int channelID, int serverID, String name, Integer createdBy, Timestamp createdAt) {
+    //     this.channelID = channelID;
+    //     this.serverID = serverID;
+    //     this.name = name;
+    //     this.createdBy = createdBy;
+    //     this.createdAt = createdAt;
+    // }
 
     public int getChannelID() {
         return channelID;
@@ -41,6 +43,13 @@ public class Channel implements Serializable {
         this.name = name;
     }
 
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+    }
 
     public Timestamp getCreatedAt() {
         return createdAt;

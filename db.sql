@@ -265,6 +265,16 @@ CREATE TABLE messages (
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+DROP TABLE If EXISTS message_reads;
+CREATE TABLE message_reads (
+  messageID INT NOT NULL,
+  userID INT NOT NULL,
+  seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (messageID, userID),
+  FOREIGN KEY (messageID) REFERENCES messages(messageID) ON DELETE CASCADE,
+  FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE
+);
+
 DELIMITER $$
 
 CREATE TRIGGER trg_servers_after_insert_bootstrap

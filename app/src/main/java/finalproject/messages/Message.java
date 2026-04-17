@@ -4,57 +4,82 @@ import java.sql.Timestamp;
 
 public class Message {
     private int messageID;
-    private int channelID;
+    private Integer channelID;
+    private Integer conversationID;
     private int senderID;
     private String username;
     private String messageText;
+    private byte[] imageData;
+    private String imageMimeType;
     private Timestamp sentOn;
+    private Timestamp editedAt;
+    private Timestamp deletedAt;
 
-    public int getMessageID() {
-        return messageID;
+    // Getters & Setters
+    public int getMessageID() { 
+        return messageID; 
     }
-
-    public void setMessageID(int messageID) {
-        this.messageID = messageID;
+    public void setMessageID(int messageID) { 
+        this.messageID = messageID; 
     }
-
-    public int getChannelID() {
-        return channelID;
+    public Integer getChannelID() { 
+        return channelID; 
     }
-
-    public void setChannelID(int channelID) {
-        this.channelID = channelID;
+    public void setChannelID(Integer channelID) { 
+        this.channelID = channelID; 
     }
-
-    public int getSenderID() {
-        return senderID;
+    public Integer getConversationID() { 
+        return conversationID; 
     }
-
-    public void setSenderID(int senderID) {
-        this.senderID = senderID;
+    public void setConversationID(Integer conversationID) { 
+        this.conversationID = conversationID; 
     }
-
-    public String getUsername() {
-        return username;
+    public int getSenderID() { 
+        return senderID; 
     }
-
-    public void setUsername(String username) {
-        this.username = username;
+    public void setSenderID(int senderID) { 
+        this.senderID = senderID; 
     }
-
-    public String getMessageText() {
-        return messageText;
+    public String getUsername() { 
+        return username; 
     }
-
-    public void setMessageText(String messageText) {
-        this.messageText = messageText;
+    public void setUsername(String username) { 
+        this.username = username; 
     }
-
-    public Timestamp getSentOn() {
-        return sentOn;
+    public String getMessageText() { 
+        return messageText; 
     }
-
-    public void setSentOn(Timestamp sentOn) {
-        this.sentOn = sentOn;
+    public void setMessageText(String messageText) { 
+        this.messageText = messageText; 
+    }
+    public byte[] getImageData() {
+        return imageData; 
+    }
+    public void setImageData(byte[] imageData) { 
+        this.imageData = imageData; 
+    }
+    public String getImageMimeType() { 
+        return imageMimeType; 
+    }
+    public void setImageMimeType(String imageMimeType) { 
+        this.imageMimeType = imageMimeType; 
+    }
+    public Timestamp getSentOn() { 
+        return sentOn; 
+    }
+    public void setSentOn(Timestamp sentOn) { 
+        this.sentOn = sentOn; 
+    }
+    public Timestamp getEditedAt() {
+         return editedAt; 
+        }
+    public void setEditedAt(Timestamp editedAt) { 
+        this.editedAt = editedAt; 
+    }
+    public Timestamp getDeletedAt() { 
+        return deletedAt; 
+    }
+    public void setDeletedAt(Timestamp deletedAt) { 
+        this.deletedAt = deletedAt; 
     }
 }

@@ -1,4 +1,4 @@
-package finalproject.chat;
+package finalproject.finalproject;
 
 import finalproject.Users.UserLogin;
 import jakarta.annotation.PostConstruct;
@@ -296,7 +296,7 @@ public class ChannelService implements Serializable {
     }
 
 
-    
+
     public int getServerID() {
         return serverID;
     }

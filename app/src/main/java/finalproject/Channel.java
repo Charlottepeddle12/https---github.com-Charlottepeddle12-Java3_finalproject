@@ -1,7 +1,8 @@
 package finalproject;
 import java.sql.Timestamp;
+import java.io.Serializable;
 
-public class Channel {
+public class Channel implements Serializable {
     private int channelID;
     private int serverID;
     private String name;

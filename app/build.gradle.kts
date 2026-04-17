@@ -24,6 +24,11 @@ dependencies {
     testImplementation(libs.junit.jupiter)
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
+    implementation("org.apache.tomcat:tomcat-servlet-api:10.1.0")
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.3.3")
+    implementation("at.favre.lib:bcrypt:0.10.2")   
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

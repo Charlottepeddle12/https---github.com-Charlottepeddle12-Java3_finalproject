@@ -20,6 +20,7 @@
     <h:panelGroup rendered="#{userLoginBean.token != null}">
         <h:messages style="color:red;" />
         <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+        <h:button value="Back to Channels" outcome="channels.xhtml" />
         <h3>Channels for Server: #{dashboardBean.selectedServerName}</h3>
         <h:form id="chatForm">
             <h:commandButton id="autoRefreshBtn"
@@ -27,11 +28,7 @@
                 style="display:none">
                 <f:ajax execute="@this" render="messagesTable"/>
             </h:commandButton>
-            <h:outputScript>
-                setInterval(function() {
-                    document.getElementById('chatForm:autoRefreshBtn').click();
-                }, 3000); 
-            </h:outputScript>
+            
             <h:dataTable id="messagesTable" value="#{messageService.messages}" var="m">
                 <h:column>
                     <b>
@@ -57,7 +54,7 @@
                         </h:commandButton>
                     </h:panelGroup>
                     <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
-                        <h:inputText value="#{messageService.messageText}" />
+                        <h:inputText value="#{messageService.editText}" />
                         <h:commandButton value="Save"
                             action="#{messageService.editMessage(m.messageID)}">
                             <f:ajax execute="@form" render=":chatForm:messagesTable :sendForm"/>

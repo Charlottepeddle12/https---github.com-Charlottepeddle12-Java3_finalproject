@@ -33,6 +33,10 @@ public class MessageService implements Serializable {
     private String loadMessageStatus;
     private Part uploadedFile;
     private Integer editingMessageID;
+    private String targetUsername;
+    private String createConversationStatus;
+    private List<Conversation> conversations = new ArrayList<>();
+    private String editText;
     //  DB
     @PostConstruct
     public void openConnection() {
@@ -43,6 +47,7 @@ public class MessageService implements Serializable {
         } catch (Exception e) {
             loadMessageStatus = e.getMessage();
         }
+        loadConversations(); 
     }
 
     @PreDestroy
@@ -114,6 +119,11 @@ public class MessageService implements Serializable {
             sendMessageStatus = "Message sent.";
         } catch (SQLException | IOException e) {
             sendMessageStatus = e.getMessage();
+        }
+        if (conversationID != null) {
+            loadDM(conversationID);
+        } else if (channelID != null) {
+            loadChannel(channelID);
         }
         messageText = null;
         uploadedFile = null;
@@ -265,7 +275,7 @@ public class MessageService implements Serializable {
     // EDIT 
     public void editMessage(int messageID) {
         editMessageStatus = "";
-        if (messageText == null || messageText.trim().isEmpty()) {
+        if (editText == null || editText.trim().isEmpty()){
             editMessageStatus = "Message cannot be empty.";
             return;
         }
@@ -286,7 +296,7 @@ public class MessageService implements Serializable {
         }
         try (PreparedStatement stmt = conn.prepareStatement(
                 "UPDATE messages SET message_text = ?, edited_at = ? WHERE messageID = ? AND senderID = ?")) {
-            stmt.setString(1, messageText);
+            stmt.setString(1, editText);
             stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
             stmt.setInt(3, messageID);
             stmt.setInt(4, login.getUserId());
@@ -300,7 +310,12 @@ public class MessageService implements Serializable {
             editMessageStatus = e.getMessage();
         }
         editingMessageID = null;
-        messageText = null;
+        editText = null;
+        if (conversationID != null) {
+            loadDM(conversationID);
+        } else if (channelID != null) {
+            loadChannel(channelID);
+        }
     }
     // SEEN
     public void markAsSeen(int messageID) {
@@ -336,6 +351,86 @@ public class MessageService implements Serializable {
             }
         } catch (SQLException ignored) {}
         return users;
+    }
+    public void createConversation() {
+        createConversationStatus = "";
+        if (conn == null || login == null) {
+            createConversationStatus = "Not connected.";
+            return;
+        }
+        if (targetUsername == null || targetUsername.trim().isEmpty()) {
+            createConversationStatus = "Enter username.";
+            return;
+        }
+        try {
+            PreparedStatement findUser = conn.prepareStatement(
+                "SELECT userID FROM users WHERE username = ?");
+            findUser.setString(1, targetUsername);
+            ResultSet rs = findUser.executeQuery();
+            if (!rs.next()) {
+                createConversationStatus = "User not available.";
+                return;
+            }
+            int otherUserId = rs.getInt("userID");
+            if (otherUserId == login.getUserId()) {
+                createConversationStatus = "Cannot DM yourself.";
+                return;
+            }
+            if (isBlocked(login.getUserId(), otherUserId)) {
+                createConversationStatus = "User not available.";
+                return;
+            }
+            PreparedStatement check = conn.prepareStatement(
+                "SELECT conversationID FROM direct_conversations " +
+                "WHERE (userOneID = ? AND userTwoID = ?) " +
+                "OR (userOneID = ? AND userTwoID = ?)");
+            check.setInt(1, login.getUserId());
+            check.setInt(2, otherUserId);
+            check.setInt(3, otherUserId);
+            check.setInt(4, login.getUserId());
+            ResultSet existing = check.executeQuery();
+            if (existing.next()) {
+                createConversationStatus = "Conversation already exists.";
+                return;
+            }
+            PreparedStatement insert = conn.prepareStatement(
+                "INSERT INTO direct_conversations (userOneID, userTwoID) VALUES (?, ?)");
+
+            insert.setInt(1, login.getUserId());
+            insert.setInt(2, otherUserId);
+            insert.executeUpdate();
+            createConversationStatus = "Conversation started.";
+            targetUsername = null;
+            loadConversations();
+        } catch (SQLException e) {
+            createConversationStatus = e.getMessage();
+        }
+    }
+    // LOAD CONVERSATIONS
+    public void loadConversations() {
+        conversations.clear();
+        try {
+            PreparedStatement stmt = conn.prepareStatement(
+                "SELECT dc.conversationID, " +
+                "CASE WHEN dc.userOneID = ? THEN u2.username ELSE u1.username END AS username " +
+                "FROM direct_conversations dc " +
+                "JOIN users u1 ON dc.userOneID = u1.userID " +
+                "JOIN users u2 ON dc.userTwoID = u2.userID " +
+                "WHERE dc.userOneID = ? OR dc.userTwoID = ?"
+            );
+            stmt.setInt(1, login.getUserId());
+            stmt.setInt(2, login.getUserId());
+            stmt.setInt(3, login.getUserId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Conversation c = new Conversation();
+                c.setConversationID(rs.getInt("conversationID"));
+                c.setUsername(rs.getString("username"));
+                conversations.add(c);
+            }
+        } catch (SQLException e) {
+            loadMessageStatus = e.getMessage();
+        }
     }
     //  GETTERS 
     public List<Message> getMessages() { 
@@ -396,6 +491,24 @@ public class MessageService implements Serializable {
     }
     public void startEdit(int messageID, String currentText) {
         this.editingMessageID = messageID;
-        this.messageText = currentText; 
+        this.editText = currentText; 
+    }
+    public String getTargetUsername() {
+    return targetUsername;
+    }
+    public void setTargetUsername(String targetUsername) {
+        this.targetUsername = targetUsername;
+    }
+    public List<Conversation> getConversations() {
+        return conversations;
+    }
+    public String getCreateConversationStatus() {
+        return createConversationStatus;
+    }
+    public String getEditText() {
+        return editText;
+    }
+    public void setEditText(String editText) {
+        this.editText = editText;
     }
 }

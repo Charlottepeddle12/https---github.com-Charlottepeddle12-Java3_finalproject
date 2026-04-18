@@ -4,14 +4,57 @@
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
+    <f:metadata>
+        <f:viewAction action="#{messageService.loadDM(messageService.conversationID)}" />
+    </f:metadata>
 <h:head>
     <title>Direct Messages</title>
 </h:head>
-
     <h:body>
     <h:panelGroup rendered="#{userLoginBean.token != null}">
         <h:messages style="color:red;" />
         <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+        <h:form >
+        <ui:repeat value="#{messageService.messages}" var="m">
+            <h:panelGroup layout="block" style="margin-bottom:10px;">
+                <b>
+                    #{m.username} (#{messageService.formatDateTime(m.sentOn)}):
+                </b><br/>
+                <h:panelGroup rendered="#{messageService.editingMessageID != m.messageID}">
+                    <h:outputText value="#{m.messageText}" />
+                    <h:outputText 
+                        rendered="#{m.senderID == userLoginBean.userId 
+                                    and not empty messageService.getSeenByUsers(m.messageID)}"
+                        value=" Seen by #{messageService.getSeenByUsersString(m.messageID)}"
+                        style="color:gray; font-size:10px;" />
+                    <h:outputText 
+                        rendered="#{not empty m.editedAt}"
+                        value=" (edited)"
+                        style="color:gray; font-size:10px;" />
+                    <br/>
+                    <h:commandButton value="Edit"
+                        action="#{messageService.startEdit(m.messageID, m.messageText)}"
+                        rendered="#{m.senderID == userLoginBean.userId 
+                                    and empty m.deletedAt 
+                                    and not messageService.isSeenByOtherUser(m.messageID)}" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
+                    <h:inputText value="#{messageService.editText}" />
+                    <h:commandButton value="Save"
+                        action="#{messageService.editMessage(m.messageID)}" />
+                </h:panelGroup>
+                <h:commandButton value="Delete"
+                    action="#{messageService.deleteMessage(m.messageID, m.senderID, 0)}"
+                    rendered="#{empty m.deletedAt and m.senderID == userLoginBean.userId}" />
+            </h:panelGroup>
+            <hr/>
+        </ui:repeat>
+        </h:form>
+        <h:form id="sendForm" enctype="multipart/form-data">
+            <h:inputText value="#{messageService.messageText}" />
+            <h:inputFile value="#{messageService.uploadedFile}" />
+            <h:commandButton value="Send" action="#{messageService.sendMessage}" />
+        </h:form>
     </h:panelGroup>
     <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
 </h:body>

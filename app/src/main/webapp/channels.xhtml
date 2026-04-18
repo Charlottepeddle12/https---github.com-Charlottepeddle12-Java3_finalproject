@@ -20,6 +20,10 @@
     <h:panelGroup rendered="#{userLoginBean.token != null}">
         <h:messages style="color:red;" />
         <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+        <h:form>
+            <h:commandButton value="Back to Servers"
+                action="server.xhtml?faces-redirect=true" />
+        </h:form>
         <h1>Channel Management</h1>
         <h:form>
             <h3>Create Channel</h3>

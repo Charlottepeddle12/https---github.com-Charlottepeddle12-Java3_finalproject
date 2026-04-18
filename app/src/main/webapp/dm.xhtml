@@ -9,8 +9,9 @@
 </h:head>
 
     <h:body>
-    <h:panelGroup  rendered="#{userLoginBean.userId > 0}">
-        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" /><h3>Channels for Server: #{dashboardBean.selectedServerName}</h3>
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <h:messages style="color:red;" />
+        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
     </h:panelGroup>
     <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
 </h:body>

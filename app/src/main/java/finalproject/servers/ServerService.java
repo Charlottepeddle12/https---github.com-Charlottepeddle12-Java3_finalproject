@@ -51,7 +51,8 @@ public class ServerService implements Serializable {
     private String permissionName;
     private List<MemberPermissionView> permissionList = new ArrayList<>();
     private String permissionServerName;
-    private String manageServerName;    
+    private String manageServerName; 
+    private boolean publicLoaded = false;   
     
     //  DB
     @PostConstruct
@@ -80,7 +81,6 @@ public class ServerService implements Serializable {
     // Helper method to add a user as a member to a server
     private void addMembership(int serverId, int userId, boolean isOwner) {
         String sql = "INSERT INTO server_members (userID, serverID) VALUES (?, ?)";
-        System.out.println("ADD MEMBERSHIP CALLED: server=" + serverId + " user=" + userId);
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);   
             stmt.setInt(2, serverId); 
@@ -100,7 +100,6 @@ public class ServerService implements Serializable {
             } catch (SQLException e) {
                 throw new RuntimeException("Membership error: " + e.getMessage());
             }
-        System.out.println("ADD MEMBERSHIP CALLED: server=" + serverId + " user=" + userId);
     }
     //  Server Creation
     public void createServer() {
@@ -172,6 +171,7 @@ public class ServerService implements Serializable {
     }
     //  Load Public Servers 
     public void loadPublicServers() {
+        publicLoaded = true;
         message = "";
         publicServers.clear(); 
         if (conn == null || login == null) {
@@ -1188,6 +1188,9 @@ public class ServerService implements Serializable {
     }
     public void setManageServerName(String manageServerName) {
         this.manageServerName = manageServerName;
+    }
+    public boolean isPublicLoaded() {
+        return publicLoaded;
     }
     
 }

@@ -39,10 +39,7 @@
                             action="#{serverBean.loadUserServers}">
                 <f:param name="loadServers" value="true"/>
             </h:commandButton>
-            <h:panelGroup rendered="#{param.loadServers eq 'true' and empty serverBean.servers}">
-                <h:outputText value="You don’t have any servers yet." style="color: green; margin-top: 10px;" />
-            </h:panelGroup>
-            <h:panelGroup rendered="#{param.loadServers eq 'true' and not empty serverBean.servers}">
+            <h:panelGroup>
                 <h:dataTable value="#{serverBean.servers}" var="server" border="1">
                     <h:column>
                         <f:facet name="header">ID</f:facet>
@@ -76,6 +73,12 @@
                             <f:ajax execute="@this" render="@form" />
                         </h:commandButton>
                     </h:column>
+                    <h:column>
+                        <f:facet name="header">Channels</f:facet>
+                        <h:button value="Open Channels" outcome="channels.xhtml">
+                            <f:param name="serverName" value="#{server.name}" />
+                        </h:button>
+                    </h:column>
                     
                 </h:dataTable>
             </h:panelGroup>
@@ -86,12 +89,8 @@
             <h:commandButton value="Browse Public Servers"
                             action="#{serverBean.loadPublicServers}">
                 <f:param name="loadPublic" value="true"/>
-            </h:commandButton> 
-            <h:panelGroup rendered="#{ empty serverBean.publicServers}">
-                <h:outputText value="No public servers available."
-                            style="color:gray; font-style:italic;" />
-            </h:panelGroup>   
-            <h:panelGroup rendered="#{ not empty serverBean.publicServers}">        
+            </h:commandButton>    
+            <h:panelGroup rendered="#{serverBean.publicLoaded and not empty serverBean.publicServers}">
                 <h:dataTable value="#{serverBean.publicServers}" var="server" border="1">
                     <h:column>
                         <f:facet name="header">ID</f:facet>
@@ -104,11 +103,14 @@
                     <h:column>
                         <f:facet name="header">Action</f:facet>
                         <h:commandButton value="Join" action="#{serverBean.joinPublicServer(server.serverID)}">
-                            <f:ajax execute="@this" render="@form joinMsg"/>
+                            <f:ajax execute="@this" render="@form "/>
                         </h:commandButton>
                     </h:column>
                 </h:dataTable>
-                <h:outputText value="#{serverBean.joinPublicServerMessage}" style="color:blue;" />
+                 <h:outputText value="#{serverBean.joinPublicServerMessage}" rendered="#{not empty serverBean.joinPublicServerMessage}" style="color: green; margin-top: 14px;" />
+            </h:panelGroup>
+            <h:panelGroup rendered="#{serverBean.publicLoaded and empty serverBean.publicServers}">
+                <h:outputText value="No public servers available." style="color:blue;" />
             </h:panelGroup>
         </h:form>
         <h:form>

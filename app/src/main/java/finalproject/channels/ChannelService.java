@@ -127,8 +127,6 @@ public class ChannelService implements Serializable {
     }
     //load channels for server
     public void loadChannels() {
-        createMessage = "";
-        deleteChannelMessage = "";
         loadChannelsMessage = "";
         channels.clear();
         if (conn == null || login == null) {
@@ -183,7 +181,7 @@ public class ChannelService implements Serializable {
             if (channels.isEmpty()) {
                 loadChannelsMessage = "No channels found for this server.";
             } else {
-                loadChannelsMessage = "Channels loaded successfully.";
+                loadChannelsMessage = "";
             }
         } catch (SQLException e) {
             loadChannelsMessage = "Failed to load channels: " + e.getMessage();

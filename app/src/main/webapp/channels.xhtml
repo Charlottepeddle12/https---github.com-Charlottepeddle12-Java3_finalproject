@@ -24,14 +24,15 @@
         <h:form>
             <h3>Create Channel</h3>
             <h:panelGrid columns="2">
-                <h:outputLabel value="Channel Name:" />
-                <h:inputText value="#{channelBean.channelName}" required="true" />
+                <h:outputLabel for="channelName" value="Channel Name:" />
+                <h:inputText id="channelName" value="#{channelBean.channelName}" />
             </h:panelGrid>
             <br/>
             <h:commandButton value="Create Channel"
-                            action="#{channelBean.createChannel}">
-                <f:ajax execute="@form" render="@form" resetValues="true"/>
-            </h:commandButton>            <br/><br/>
+                action="#{channelBean.createChannel}">
+                <f:ajax execute="@form" render="@form"/>
+            </h:commandButton>            
+            <br/><br/>
             <h:outputText value="#{channelBean.createMessage}" style="color:green;" />
         </h:form>
         <h:form>
@@ -44,10 +45,21 @@
                 <h:column>
                     <f:facet name="header">Delete</f:facet>
                     <h:commandButton value="Delete"
-                                    action="#{channelBean.deleteChannel(c.channelID)}"
-                                    onclick="return confirm('Delete this channel?');" />
+                        action="#{channelBean.deleteChannel(c.channelID)}"
+                        onclick="return confirm('Delete this channel?');"
+                        immediate="true">
+                        <f:ajax execute="@this" render="@form messages channelTable"/>
+                    </h:commandButton>
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Message</f:facet>
+                    <h:button value="Open Chat" outcome="chat.xhtml">
+                        <f:param name="channelID" value="#{c.channelID}" />
+                        <f:param name="serverName" value="#{channelBean.serverName}" />
+                    </h:button>
                 </h:column>
             </h:dataTable>
+            <h:outputText value="#{channelBean.deleteChannelMessage}" style="color:red;" /><br/>
             <h:outputText value="#{channelBean.loadChannelsMessage}" style="color:blue;" />
         </h:form>
     </h:panelGroup>

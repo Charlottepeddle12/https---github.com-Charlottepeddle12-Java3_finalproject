@@ -36,6 +36,10 @@
                     </b><br/>
                     <h:panelGroup rendered="#{messageService.editingMessageID != m.messageID}">
                         <h:outputText value="#{m.messageText}"/>
+                        <h:graphicImage 
+                            rendered="#{not empty m.imageData and empty m.deletedAt}"
+                            value="data:#{m.imageMimeType};base64,#{messageService.encodeImage(m.imageData)}"
+                            style="max-width:200px; max-height:200px;" />
                         <h:outputText 
                             rendered="#{m.senderID == userLoginBean.userId and not empty messageService.getSeenByUsers(m.messageID)}"
                             value="Seen by #{messageService.getSeenByUsersString(m.messageID)}"

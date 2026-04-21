@@ -150,6 +150,8 @@ public class MessageService implements Serializable {
                     }
                 } else {
                     msg.setMessageText(rs.getString("message_text"));
+                    msg.setImageData(rs.getBytes("image_data"));        
+                    msg.setImageMimeType(rs.getString("image_mime_type"));
                 }
                 msg.setSentOn(rs.getTimestamp("sentOn"));
                 msg.setEditedAt(rs.getTimestamp("edited_at"));

@@ -103,7 +103,7 @@ public class ServerService implements Serializable {
     }
     //  Server Creation
     public void createServer() {
-        createMessage  = "";
+        clearMessages(); 
         if (conn == null || login == null) {
             createMessage  = "Not connected to database or user not logged in.";
             return;
@@ -201,7 +201,7 @@ public class ServerService implements Serializable {
     }
     // Join Public Server 
     public void joinPublicServer(int serverId) {
-        joinPublicServerMessage = "";
+        clearMessages();  
         if (conn == null || login == null) {
             joinPublicServerMessage = "Not connected to database or user not logged in.";
             return;
@@ -244,7 +244,7 @@ public class ServerService implements Serializable {
     }
     // Invite User to Server by server name and username
     public void inviteUserToServer() {
-        inviteMessage  = "";
+        clearMessages(); 
         String serverName = this.inviteServerName;
         String targetUserName = this.inviteTargetUserName;
         if (conn == null || login == null) {
@@ -360,7 +360,7 @@ public class ServerService implements Serializable {
     }
     //  load Invites for User
     public List<Invite> loadInvites() {
-        loadInviteMessage = "";
+        clearMessages();  
         List<Invite> invites = new ArrayList<>();
         if (conn == null) {
             loadInviteMessage = "Not connected to database.";
@@ -454,7 +454,7 @@ public class ServerService implements Serializable {
     }
     //Kick User from Server 
     public void kickUserFromServer() {
-        kickMessage  = "";
+        clearMessages();
         if (conn == null || login == null) {
             kickMessage  = "Not connected.";
             return;
@@ -515,7 +515,7 @@ public class ServerService implements Serializable {
     }
     //transfer ownership of server 
     public void transferServerOwnership() {
-        transferMessage = "";
+        clearMessages();
         if (conn == null || login == null) {
             transferMessage = "Not connected.";
             return;
@@ -596,7 +596,7 @@ public class ServerService implements Serializable {
     }
     //leave server
     public void leaveServer() {
-        leaveMessage = "";
+        clearMessages();
         if (conn == null || login == null) {
             leaveMessage = "Not connected.";
             return;
@@ -725,7 +725,7 @@ public class ServerService implements Serializable {
     }
     // delete server by name (ONLY OWNER)
     public void deleteServerByName(String name){
-        deleteServerMessage = "";
+        clearMessages(); 
         if (conn == null || login == null) {
             deleteServerMessage = "Not connected.";
             return;
@@ -764,7 +764,7 @@ public class ServerService implements Serializable {
     }
     //grant role to user
     public void givePermission() {
-        grantRemovePermisionMessage = "";
+        clearMessages();  
         if (conn == null || login == null) {
             grantRemovePermisionMessage = "Not connected.";
             return;
@@ -946,7 +946,7 @@ public class ServerService implements Serializable {
     }
     //load permisions in a server
     public void loadPermissions() {
-        permissionMessage = "";
+        clearMessages(); 
         permissionList.clear();
         if (conn == null || login == null) {
             permissionMessage = "Not connected.";
@@ -1192,5 +1192,17 @@ public class ServerService implements Serializable {
     public boolean isPublicLoaded() {
         return publicLoaded;
     }
-    
+    public void clearMessages() {
+        createMessage = null;
+        deleteServerMessage = null;
+        inviteMessage = null;
+        kickMessage = null;
+        transferMessage = null;
+        leaveMessage = null;
+        permissionMessage = null;
+        joinPublicServerMessage = null;
+        loadInviteMessage = null;
+        grantRemovePermisionMessage = null;
+        message = null;
+    }
 }

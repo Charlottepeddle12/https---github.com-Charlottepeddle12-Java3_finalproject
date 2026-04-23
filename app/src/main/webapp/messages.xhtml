@@ -1,14 +1,35 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:h="http://xmlns.jcp.org/jsf/html"
-    xmlns:ui="jakarta.faces.facelets">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets">
 <h:head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Messages</title>
+    <h:outputStylesheet name="style.css" />
 </h:head>
 <h:body>
-    <h:panelGroup  rendered="#{userLoginBean.userId > 0}">
-        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" /><h3>Channels for Server: #{dashboardBean.selectedServerName}</h3>
+    <h:panelGroup rendered="#{userLoginBean.userId > 0}">
+        <div class="container">
+            <div class="navbar">
+                <h:button value="← Dashboard" outcome="dashboard.xhtml" styleClass="btn-back" />
+            </div>
+            <h1>💬 Messages</h1>
+            <div class="info-box">
+                🖥️ <strong>Server:</strong> #{dashboardBean.selectedServerName}
+            </div>
+            <div class="empty-state" style="margin-top:20px;">
+                <span class="empty-icon">📡</span>
+                <p>Navigate to a channel to view and send messages.</p>
+            </div>
+        </div>
     </h:panelGroup>
-    <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
+
+    <h:panelGroup rendered="#{userLoginBean.userId == 0}">
+        <div class="container container-sm">
+            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to view messages.</div>
+            <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
+        </div>
+    </h:panelGroup>
 </h:body>
 </html>

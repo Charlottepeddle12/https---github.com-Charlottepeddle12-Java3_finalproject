@@ -283,7 +283,7 @@ BEGIN
   VALUES (NEW.ownerID, NEW.serverID);
 
   
-END$$
+END $$
 
 CREATE TRIGGER trg_blocks_after_insert_remove_friendship
 AFTER INSERT ON blocks

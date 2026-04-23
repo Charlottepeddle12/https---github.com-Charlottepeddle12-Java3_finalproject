@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<f:metadata>
+    <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
+    <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
+    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+    <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+</f:metadata>
+<h:head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Friends</title>
+    <h:outputStylesheet name="style.css" />
+</h:head>
+<h:body>
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <div class="container">
+
+            <div class="navbar">
+                <h:button value="← Dashboard" outcome="dashboard.xhtml" styleClass="btn-back" />
+            </div>
+
+            <h1>👥 Friends</h1>
+
+            <!-- Send / Accept requests side by side -->
+            <div class="grid">
+                <div class="card">
+                    <h3>📨 Send Friend Request</h3>
+                    <h:form>
+                        <div class="form-group">
+                            <h:outputLabel for="friendUsername" value="Username" />
+                            <h:inputText id="friendUsername" value="#{friendsBean.sendFriendUserName}"
+                                       required="true" placeholder="Enter username..." />
+                        </div>
+                        <h:commandButton value="Send Request" action="#{friendsBean.sendFriendRequest}" styleClass="btn-primary" />
+                        <h:messages styleClass="alert alert-error" />
+                        <h:outputText rendered="#{not empty friendsBean.sendMessage}"
+                                     value="#{friendsBean.sendMessage}" styleClass="alert alert-success" />
+                    </h:form>
+                </div>
+
+                <div class="card">
+                    <h3>✅ Accept Friend Request</h3>
+                    <h:form>
+                        <div class="form-group">
+                            <h:outputLabel for="acceptFriendUsername" value="From Username" />
+                            <h:inputText id="acceptFriendUsername" value="#{friendsBean.acceptFriendUserName}"
+                                       required="true" placeholder="Enter username..." />
+                        </div>
+                        <h:commandButton value="Accept Request" action="#{friendsBean.acceptFriendRequest}" styleClass="btn-success" />
+                        <h:messages styleClass="alert alert-error" />
+                        <h:outputText rendered="#{not empty friendsBean.acceptMessage}"
+                                     value="#{friendsBean.acceptMessage}" styleClass="alert alert-success" />
+                    </h:form>
+                </div>
+            </div>
+
+            <!-- Sent Requests -->
+            <h2>📤 Sent Requests</h2>
+            <h:panelGroup rendered="#{empty friendsBean.sentFriendRequests}">
+                <div class="empty-state">
+                    <span class="empty-icon">📭</span>
+                    <p>No pending sent requests.</p>
+                </div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty friendsBean.sentFriendRequests}">
+                <ui:repeat value="#{friendsBean.sentFriendRequests}" var="sentRequest">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>#{sentRequest}</strong><br/>
+                            <small>⏳ Pending…</small>
+                        </div>
+                        <div class="list-item-actions">
+                            <h:form style="margin:0;">
+                                <h:commandButton value="Cancel" action="#{friendsBean.cancelSentFriendRequest(sentRequest)}" styleClass="btn-danger" />
+                            </h:form>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:panelGroup>
+
+            <!-- Received Requests -->
+            <h2>📥 Pending Requests</h2>
+            <h:panelGroup rendered="#{empty friendsBean.receivedFriendRequests}">
+                <div class="empty-state">
+                    <span class="empty-icon">📬</span>
+                    <p>No incoming friend requests.</p>
+                </div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty friendsBean.receivedFriendRequests}">
+                <ui:repeat value="#{friendsBean.receivedFriendRequests}" var="requesterName">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>#{requesterName}</strong><br/>
+                            <small>🤝 Wants to be your friend</small>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:panelGroup>
+
+            <!-- Friends List -->
+            <h2>⭐ Your Friends</h2>
+            <h:panelGroup rendered="#{empty friendsBean.friendNames}">
+                <div class="empty-state">
+                    <span class="empty-icon">🙁</span>
+                    <p>No friends yet. Send a request to get started!</p>
+                </div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty friendsBean.friendNames}">
+                <div style="margin:10px 0 14px;">
+                    <span class="badge">#{friendsBean.friendCount} Friends</span>
+                </div>
+                <ui:repeat value="#{friendsBean.friendNames}" var="friendName">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>#{friendName}</strong><br/>
+                            <small style="color:var(--brand-green);">● Online</small>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:panelGroup>
+
+        </div>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{userLoginBean.userId == 0}">
+        <div class="container container-sm">
+            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to manage friends.</div>
+            <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
+        </div>
+    </h:panelGroup>
+</h:body>
+</html>

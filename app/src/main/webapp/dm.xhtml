@@ -4,49 +4,33 @@
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
 <f:metadata>
-    <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
-    <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
-    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
-    <f:viewParam name="channelID" value="#{messageService.channelID}" />
-    <f:viewAction action="#{messageService.loadChannel(messageService.channelID)}" rendered="#{not empty messageService.channelID}" />
+    <f:viewAction action="#{messageService.loadDM(messageService.conversationID)}" />
+    <f:viewParam name="conversationID" value="#{messageService.conversationID}" />
+    <f:viewAction action="#{messageService.loadDM(messageService.conversationID)}" rendered="#{not empty messageService.conversationID}" />
 </f:metadata>
 <h:head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Channel Chat</title>
+    <title>Direct Message</title>
     <h:outputStylesheet name="style.css" />
 </h:head>
 <h:body>
     <h:panelGroup rendered="#{userLoginBean.token != null}">
         <div class="container">
 
-            <!-- Navigation -->
             <div class="navbar">
                 <h:button value="← Dashboard" outcome="dashboard.xhtml" styleClass="btn-back" />
-                <h:button value="← Channels"  outcome="channels.xhtml"  styleClass="btn-back" />
             </div>
 
-            <h1>📡 Channel Chat</h1>
-
-            <div class="info-box">
-                🖥️ <strong>Server:</strong> #{dashboardBean.selectedServerName}
-            </div>
-
+            <h1>💌 Direct Message</h1>
             <h:messages styleClass="alert alert-error" />
 
-            <!-- Messages + auto-refresh -->
-            <h:form id="chatForm">
-                <h:commandButton id="autoRefreshBtn"
-                                 action="#{messageService.loadChannel(messageService.channelID)}"
-                                 style="display:none;">
-                    <f:ajax execute="@this" render="messagesTable"/>
-                </h:commandButton>
-
+            <h:form id="dmForm">
                 <div class="messages-wrapper">
                     <h:panelGroup rendered="#{empty messageService.messages}">
                         <div class="empty-state">
-                            <span class="empty-icon">💬</span>
-                            <p>No messages yet. Be the first to say something!</p>
+                            <span class="empty-icon">✉️</span>
+                            <p>No messages yet. Start the conversation!</p>
                         </div>
                     </h:panelGroup>
 
@@ -65,8 +49,7 @@
                                                    styleClass="message-image" />
                                 </h:panelGroup>
                                 <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
-                                    <h:inputText value="#{messageService.editText}"
-                                                 style="width:100%;" />
+                                    <h:inputText value="#{messageService.editText}" style="width:100%;" />
                                 </h:panelGroup>
                             </div>
 
@@ -82,33 +65,30 @@
                                         rendered="#{m.senderID == userLoginBean.userId and empty m.deletedAt and not messageService.isSeenByOtherUser(m.messageID)}"
                                         value="✏️ Edit" action="#{messageService.startEdit(m.messageID, m.messageText)}"
                                         styleClass="btn-secondary">
-                                        <f:ajax execute="@this" render=":chatForm"/>
+                                        <f:ajax execute="@this" render=":dmForm"/>
                                     </h:commandButton>
                                 </h:panelGroup>
                                 <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
                                     <h:commandButton value="💾 Save" action="#{messageService.editMessage(m.messageID)}" styleClass="btn-success">
-                                        <f:ajax execute="@form" render=":chatForm"/>
+                                        <f:ajax execute="@form" render=":dmForm"/>
                                     </h:commandButton>
                                 </h:panelGroup>
                                 <h:commandButton
-                                    rendered="#{empty m.deletedAt and (m.senderID == userLoginBean.userId or userLoginBean.userId == dashboardBean.selectedServerOwnerID)}"
+                                    rendered="#{empty m.deletedAt and m.senderID == userLoginBean.userId}"
                                     value="🗑️ Delete"
-                                    action="#{messageService.deleteMessage(m.messageID, m.senderID, dashboardBean.selectedServerID)}"
+                                    action="#{messageService.deleteMessage(m.messageID, m.senderID, 0)}"
                                     styleClass="btn-danger">
-                                    <f:ajax execute="@this" render=":chatForm"/>
+                                    <f:ajax execute="@this" render=":dmForm"/>
                                 </h:commandButton>
                             </div>
                         </div>
                     </ui:repeat>
                 </div>
-
-                <h:outputText id="messagesTable" />
             </h:form>
 
-            <!-- Send bar -->
             <h:form id="sendForm" enctype="multipart/form-data">
                 <div class="send-bar">
-                    <h:inputText value="#{messageService.messageText}" placeholder="Message the channel..." style="flex:1;" />
+                    <h:inputText value="#{messageService.messageText}" placeholder="Send a message..." style="flex:1;" />
                     <h:inputFile value="#{messageService.uploadedFile}" style="font-size:0.82rem; color:var(--text-muted);" />
                     <h:commandButton value="Send →" action="#{messageService.sendMessage}" styleClass="btn-primary" style="margin:0;" />
                 </div>
@@ -119,7 +99,7 @@
 
     <h:panelGroup rendered="#{userLoginBean.userId == 0}">
         <div class="container container-sm">
-            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to chat.</div>
+            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to view messages.</div>
             <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
         </div>
     </h:panelGroup>

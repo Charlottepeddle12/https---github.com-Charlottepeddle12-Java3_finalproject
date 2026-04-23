@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:f="jakarta.faces.core">
+<f:metadata>
+    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+</f:metadata>
+<h:head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blocked Users</title>
+    <h:outputStylesheet name="style.css" />
+</h:head>
+<h:body>
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <div class="container">
+
+            <div class="navbar">
+                <h:button value="← Dashboard" outcome="dashboard.xhtml" styleClass="btn-back" />
+            </div>
+
+            <h1>🚫 Blocked Users</h1>
+
+            <h:form>
+                <div class="card">
+                    <h3>⛔ Block a User</h3>
+                    <div class="form-inline">
+                        <h:inputText id="blockInput" value="#{blockUserBean.blockedUserName}"
+                                   placeholder="Enter username..." />
+                        <h:commandButton value="Block User" action="#{blockUserBean.blockUser}" styleClass="btn-danger" />
+                    </div>
+                    <h:messages styleClass="alert alert-error" />
+                    <h:outputText rendered="#{not empty blockUserBean.message}"
+                                 value="#{blockUserBean.message}" styleClass="alert alert-error" />
+                </div>
+            </h:form>
+
+            <h2>Blocked List</h2>
+
+            <h:panelGroup rendered="#{empty blockUserBean.blockedUserNames}">
+                <div class="empty-state">
+                    <span class="empty-icon">✅</span>
+                    <p>You haven't blocked anyone. Keep it peaceful!</p>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{not empty blockUserBean.blockedUserNames}">
+                <ui:repeat value="#{blockUserBean.blockedUserNames}" var="blocked">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <strong>#{blocked}</strong><br/>
+                            <small style="color:var(--brand-red);">🚫 Blocked</small>
+                        </div>
+                        <div class="list-item-actions">
+                            <h:form style="margin:0;">
+                                <h:commandButton value="Unblock" action="#{blockUserBean.unblockUser}" styleClass="btn-success">
+                                    <f:setPropertyActionListener target="#{blockUserBean.blockedUserName}" value="#{blocked}" />
+                                </h:commandButton>
+                            </h:form>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </h:panelGroup>
+
+        </div>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{userLoginBean.userId == 0}">
+        <div class="container container-sm">
+            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to manage blocked users.</div>
+            <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
+        </div>
+    </h:panelGroup>
+</h:body>
+</html>

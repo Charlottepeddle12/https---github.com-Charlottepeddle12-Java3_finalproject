@@ -1,94 +1,63 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+<html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
-<f:metadata>
-    <f:viewAction action="#{messageService.loadConversations}" />
-</f:metadata>
+
 <h:head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
-    <h:outputStylesheet name="style.css" />
+    <title>Dashboard | Community Hub</title>
 </h:head>
-<h:body>
-    <h:panelGroup id="dashboard" rendered="#{userLoginBean.token != null}">
-        <div class="container">
 
-            <!-- Welcome banner -->
-            <div class="welcome-section">
-                <div>
-                    <h2>👋 Welcome, #{userLoginBean.userName}!</h2>
-                    <p class="welcome-sub">Here's what's happening today.</p>
-                </div>
-                <div class="welcome-avatar">🏠</div>
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
+    <div style="background:#1e40af; color:white; padding:32px 24px;">
+        <div style="max-width:1080px; margin:0 auto; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px;">
+            <div>
+                <h1 style="margin:0; font-size:34px;">Hello, #{userLoginBean.userName}</h1>
+                <p style="margin:8px 0 0; opacity:0.87;">Your collaboration dashboard is ready.</p>
             </div>
-
-            <!-- Navigation -->
-            <h:form styleClass="navbar">
-                <h:commandButton value="👥 Friends" action="friends.xhtml?faces-redirect=true" styleClass="btn-primary" />
-                <h:commandButton value="🖥️ Servers" action="server.xhtml?faces-redirect=true" styleClass="btn-secondary" />
-                <h:commandButton value="🚫 Blocked" action="block.xhtml?faces-redirect=true" styleClass="btn-secondary" />
-                <span class="navbar-spacer"></span>
-                <h:commandButton value="⬠ Logout" action="#{userLoginBean.logout}" styleClass="btn-danger" />
-            </h:form>
-
-            <!-- Start DM -->
             <h:form>
-                <h:messages styleClass="alert alert-error" />
-                <div class="card">
-                    <h3>💬 Start a Direct Message</h3>
-                    <div class="form-inline">
-                        <h:inputText value="#{messageService.targetUsername}" placeholder="Search for a user..." />
-                        <h:commandButton value="Open DM" action="#{messageService.createConversation}" styleClass="btn-primary" />
-                    </div>
-                    <h:outputText rendered="#{not empty messageService.createConversationStatus}"
-                                 value="#{messageService.createConversationStatus}"
-                                 styleClass="alert alert-success" />
-                </div>
+                <h:commandButton value="Logout" action="#{userLoginBean.logout}"
+                                 style="padding:12px 22px; background:#ef4444; color:white; border:none; border-radius:14px; font-weight:700; cursor:pointer;" />
             </h:form>
-
-            <!-- Conversations -->
-            <h2>💌 Your Conversations</h2>
-
-            <h:panelGroup rendered="#{empty messageService.conversations}">
-                <div class="empty-state">
-                    <span class="empty-icon">🗨️</span>
-                    <p>No conversations yet. Start a DM with a friend above!</p>
-                </div>
-            </h:panelGroup>
-
-            <h:panelGroup rendered="#{not empty messageService.conversations}">
-                <ui:repeat value="#{messageService.conversations}" var="c">
-                    <div class="list-item">
-                        <div class="list-item-content">
-                            <strong>#{c.username}</strong><br/>
-                            <small>Direct Message</small>
-                        </div>
-                        <div class="list-item-actions">
-                            <h:form style="margin:0;">
-                                <h:commandButton value="Open →" action="dm.xhtml?faces-redirect=true" styleClass="btn-primary">
-                                    <f:setPropertyActionListener
-                                        target="#{messageService.conversationID}"
-                                        value="#{c.conversationID}" />
-                                </h:commandButton>
-                            </h:form>
-                        </div>
-                    </div>
-                </ui:repeat>
-            </h:panelGroup>
-
         </div>
-    </h:panelGroup>
+    </div>
 
-    <h:panelGroup rendered="#{userLoginBean.userId == 0}">
-        <div class="container container-sm">
-            <div class="alert alert-info">
-                🔒 <strong>Not logged in</strong> — Please sign in to access the dashboard.
-            </div>
-            <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
+    <div style="max-width:1080px; margin:28px auto; padding:0 24px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px;">
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Servers</h2>
+            <p style="color:#475569;">Create, join, and manage your server groups.</p>
+            <h:link outcome="server.xhtml" value="View servers"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
         </div>
-    </h:panelGroup>
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Channels</h2>
+            <p style="color:#475569;">Browse channels inside your servers and add new ones.</p>
+            <h:link outcome="channels.xhtml" value="View channels"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Friends</h2>
+            <p style="color:#475569;">Manage friend connections and pending invites.</p>
+            <h:link outcome="friends.xhtml" value="View friends"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Chat</h2>
+            <p style="color:#475569;">Open the chat room to send and receive messages.</p>
+            <h:link outcome="chat.xhtml" value="Open chat"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Direct Messages</h2>
+            <p style="color:#475569;">Send private messages to a friend in the system.</p>
+            <h:link outcome="dm.xhtml" value="Send DM"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+        <div style="background:white; border-radius:24px; padding:26px; box-shadow:0 18px 45px rgba(15,23,42,0.08);">
+            <h2 style="margin-top:0;">Block List</h2>
+            <p style="color:#475569;">Block or unblock users directly from your account.</p>
+            <h:link outcome="block.xhtml" value="Manage blocks"
+                    style="display:inline-block; margin-top:16px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+    </div>
 </h:body>
 </html>

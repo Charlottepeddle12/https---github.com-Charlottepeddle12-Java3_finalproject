@@ -2,6 +2,9 @@ package finalproject.messages;
 
 import java.sql.Timestamp;
 
+import jakarta.inject.Named;
+
+
 public class Message {
     private int messageID;
     private Integer channelID;

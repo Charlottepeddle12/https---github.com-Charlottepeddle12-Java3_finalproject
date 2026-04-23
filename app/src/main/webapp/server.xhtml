@@ -1,392 +1,169 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+<html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
+
 <f:metadata>
-    <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
-    <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
-    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
-    <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+    <f:viewAction action="#{serverBean.loadUserServers}" />
+    <f:viewAction action="#{serverBean.loadPublicServers}" />
+    <f:viewAction action="#{serverBean.loadMyInvites}" />
 </f:metadata>
+
 <h:head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Server Management</title>
-    <h:outputStylesheet name="style.css" />
+    <title>Servers | Community Hub</title>
 </h:head>
-<h:body>
-    <h:panelGroup rendered="#{userLoginBean.token != null}">
-        <div class="container">
 
-            <div class="navbar">
-                <h:button value="← Dashboard" outcome="dashboard.xhtml" styleClass="btn-back" />
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
+
+    <div style="max-width:1080px; margin:32px auto; padding:24px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08);">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h1 style="margin:0; font-size:28px;">Servers</h1>
+                <p style="margin:8px 0 0; color:#475569;">Create, join, or invite users to servers.</p>
             </div>
 
-            <h1>🖥️ Server Management</h1>
+            <h:link outcome="dashboard" value="Back to Dashboard"
+                    style="padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
 
-            <!-- Create Server -->
-            <div class="card">
-                <h3>🌐 Create New Server</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="form-inline">
-                        <h:inputText id="serverName" value="#{serverBean.serverName}"
-                                   placeholder="Server name..." required="true" />
-                        <label style="display:flex; align-items:center; gap:8px; color:var(--text-secondary); white-space:nowrap; cursor:pointer;">
-                            <h:selectBooleanCheckbox id="publicServer" value="#{serverBean.publicServer}" />
-                            Public Server
-                        </label>
-                        <h:commandButton value="✨ Create" action="#{serverBean.createServer}" styleClass="btn-success">
-                            <f:ajax execute="@form" render="@form"/>
-                        </h:commandButton>
-                    </div>
-                    <h:outputText rendered="#{not empty serverBean.createMessage}"
-                                 value="#{serverBean.createMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
+        <h:outputText value="#{serverBean.message}"
+                      rendered="#{not empty serverBean.message}"
+                      style="display:block; margin:18px 0; color:#b91c1c;" />
 
-            <!-- My Servers -->
-            <h2>Your Servers</h2>
-            <h:form>
-                <h:messages styleClass="alert alert-error" />
-                <h:commandButton value="🔄 Load My Servers" action="#{serverBean.loadUserServers}" styleClass="btn-primary">
-                    <f:param name="loadServers" value="true"/>
-                </h:commandButton>
+        <div style="display:grid; gap:20px; margin-top:24px;">
 
-                <h:panelGroup rendered="#{not empty serverBean.servers}">
-                    <table style="margin-top:16px;">
-                        <thead>
-                            <tr>
-                                <th>Server</th>
-                                <th>Owner ID</th>
-                                <th>Type</th>
-                                <th>Members</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <ui:repeat value="#{serverBean.servers}" var="server">
-                                <tr>
-                                    <td><strong>#{server.name}</strong></td>
-                                    <td>#{server.ownerID}</td>
-                                    <td>
-                                        <span class="badge #{server.publicServer ? 'badge-secondary' : ''}">
-                                            #{server.publicServer ? '🌐 Public' : '🔒 Private'}
-                                        </span>
-                                    </td>
-                                    <td style="font-size:0.83rem; color:var(--text-muted);">
-                                        <ui:repeat value="#{serverBean.loadServerMembers(server.serverID)}" var="m">
-                                            #{m}<br/>
-                                        </ui:repeat>
-                                    </td>
-                                    <td>
-                                        <h:form style="display:inline; margin:0;">
-                                            <h:button value="📡 Channels" outcome="channels.xhtml" styleClass="btn-secondary">
-                                                <f:param name="serverName" value="#{server.name}" />
-                                            </h:button>
-                                            <h:commandButton value="🗑️ Delete"
-                                                           action="#{serverBean.deleteServerByName(server.name)}"
-                                                           rendered="#{serverBean.userId eq server.ownerID}"
-                                                           styleClass="btn-danger"
-                                                           onclick="return confirm('Delete this server?');">
-                                                <f:ajax execute="@this" render=":container" />
-                                            </h:commandButton>
-                                        </h:form>
-                                    </td>
-                                </tr>
-                            </ui:repeat>
-                        </tbody>
-                    </table>
-                </h:panelGroup>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
 
-                <h:panelGroup rendered="#{empty serverBean.servers}">
-                    <div class="empty-state" style="margin-top:20px;">
-                        <span class="empty-icon">🖥️</span>
-                        <p>You haven't created or joined any servers yet.</p>
-                    </div>
-                </h:panelGroup>
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2 style="margin-top:0;">Create Server</h2>
 
-                <h:outputText rendered="#{not empty serverBean.deleteServerMessage}"
-                             value="#{serverBean.deleteServerMessage}" styleClass="alert alert-success" />
-            </h:form>
+                    <h:form>
+                        <div style="margin-bottom:18px;">
+                            <h:outputLabel for="serverName" value="Server name"
+                                           style="display:block; margin-bottom:8px; font-weight:600;" />
 
-            <!-- Public Servers -->
-            <div class="card">
-                <h3>🌐 Browse Public Servers</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <h:commandButton value="🔍 Load Public Servers" action="#{serverBean.loadPublicServers}" styleClass="btn-primary">
-                        <f:param name="loadPublic" value="true"/>
-                    </h:commandButton>
+                            <h:inputText id="serverName"
+                                         value="#{serverBean.serverName}"
+                                         required="true"
+                                         style="width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:14px;" />
+                        </div>
 
-                    <h:panelGroup rendered="#{serverBean.publicLoaded and not empty serverBean.publicServers}">
-                        <table style="margin-top:16px;">
-                            <thead>
-                                <tr><th>Server Name</th><th>Action</th></tr>
-                            </thead>
-                            <tbody>
-                                <ui:repeat value="#{serverBean.publicServers}" var="server">
-                                    <tr>
-                                        <td><strong>🌐 #{server.name}</strong></td>
-                                        <td>
-                                            <h:form style="display:inline; margin:0;">
-                                                <h:commandButton value="Join →" action="#{serverBean.joinPublicServer(server.serverID)}" styleClass="btn-success">
-                                                    <f:ajax execute="@this" render=":container" />
-                                                </h:commandButton>
-                                            </h:form>
-                                        </td>
-                                    </tr>
-                                </ui:repeat>
-                            </tbody>
-                        </table>
-                        <h:outputText rendered="#{not empty serverBean.joinPublicServerMessage}"
-                                     value="#{serverBean.joinPublicServerMessage}" styleClass="alert alert-success" />
-                    </h:panelGroup>
+                        <div style="margin-bottom:18px; display:flex; align-items:center; gap:12px;">
+                            <h:outputLabel for="isPublic" value="Public server"
+                                           style="font-weight:600;" />
 
-                    <h:panelGroup rendered="#{serverBean.publicLoaded and empty serverBean.publicServers}">
-                        <div class="empty-state" style="margin-top:16px;">
-                            <span class="empty-icon">🌐</span>
-                            <p>No public servers available right now.</p>
+                            <h:selectBooleanCheckbox id="isPublic"
+                                                     value="#{serverBean.publicServer}" />
+                        </div>
+
+                        <h:commandButton value="Create"
+                                         action="#{serverBean.createServer}"
+                                         style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:14px; font-weight:700; cursor:pointer;" />
+                    </h:form>
+                </div>
+
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2 style="margin-top:0;">Public Servers</h2>
+
+                    <ui:repeat value="#{serverBean.publicServers}" var="server">
+                        <div style="padding:16px; border-radius:18px; background:white; border:1px solid #e2e8f0; margin-bottom:14px;">
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                                <div>
+                                    <strong>#{server.name}</strong>
+                                    <div style="color:#64748b; font-size:0.95rem;">
+                                        ID: #{server.serverID}
+                                    </div>
+                                </div>
+
+                                <h:form>
+                                    <h:commandButton value="Join"
+                                                     action="#{serverBean.joinPublicServer(server.serverID)}"
+                                                     style="padding:10px 16px; background:#16a34a; color:white; border:none; border-radius:12px; cursor:pointer;" />
+                                </h:form>
+                            </div>
+
+                        </div>
+                    </ui:repeat>
+
+                    <h:panelGroup rendered="#{empty serverBean.publicServers}">
+                        <div style="padding:16px; color:#64748b;">
+                            No public servers available yet.
                         </div>
                     </h:panelGroup>
-                </h:form>
+                </div>
+
             </div>
 
-            <!-- Invite User -->
-            <div class="card">
-                <h3>✉️ Send Server Invite</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="grid">
-                        <div class="form-group">
-                            <h:outputLabel for="inviteServerName" value="Server Name" />
-                            <h:inputText id="inviteServerName" value="#{serverBean.inviteServerName}" placeholder="Server name..." />
-                        </div>
-                        <div class="form-group">
-                            <h:outputLabel for="inviteUsername" value="Username to Invite" />
-                            <h:inputText id="inviteUsername" value="#{serverBean.inviteTargetUserName}" placeholder="Username..." />
-                        </div>
-                    </div>
-                    <h:commandButton value="Send Invite" action="#{serverBean.inviteUserToServer}" styleClass="btn-success">
-                        <f:ajax execute="@form" render="@form inviteMessage" />
-                    </h:commandButton>
-                    <h:outputText id="inviteMessage" value="#{serverBean.getInviteMessage()}"
-                                 rendered="#{not empty serverBean.inviteMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
 
-            <!-- My Invites -->
-            <div class="card">
-                <h3>📬 Pending Invites</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <h:commandButton value="🔄 Load Invites" action="#{serverBean.loadMyInvites}" styleClass="btn-primary">
-                        <f:ajax execute="@form" render="inviteTable" />
-                    </h:commandButton>
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2 style="margin-top:0;">My Servers</h2>
 
-                    <h:panelGroup rendered="#{not empty serverBean.myInvites}">
-                        <table id="inviteTable" style="margin-top:16px;">
-                            <thead>
-                                <tr><th>Server</th><th>Invited By</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody>
-                                <ui:repeat value="#{serverBean.myInvites}" var="invite">
-                                    <tr>
-                                        <td><strong>#{invite.serverName}</strong></td>
-                                        <td>#{invite.inviterName}</td>
-                                        <td>
-                                            <h:form style="display:inline; margin:0;">
-                                                <h:commandButton value="✅ Accept" action="#{serverBean.acceptInvite(invite.inviteID)}" styleClass="btn-success">
-                                                    <f:ajax execute="@form" render=":container"/>
-                                                </h:commandButton>
-                                                <h:commandButton value="❌ Decline" action="#{serverBean.declineInvite(invite.inviteID)}" styleClass="btn-danger">
-                                                    <f:ajax execute="@form" render=":container"/>
-                                                </h:commandButton>
-                                            </h:form>
-                                        </td>
-                                    </tr>
-                                </ui:repeat>
-                            </tbody>
-                        </table>
+                    <ui:repeat value="#{serverBean.servers}" var="server">
+                        <div style="padding:16px; border-radius:18px; background:white; border:1px solid #e2e8f0; margin-bottom:14px;">
+                            <strong>#{server.name}</strong>
+                            <div style="color:#64748b; font-size:0.95rem;">
+                                ID: #{server.serverID}
+                            </div>
+                        </div>
+                    </ui:repeat>
+
+                    <h:panelGroup rendered="#{empty serverBean.servers}">
+                        <div style="padding:16px; color:#64748b;">
+                            You are not a member of any servers yet.
+                        </div>
                     </h:panelGroup>
+                </div>
+
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2 style="margin-top:0;">Invites</h2>
+
+                    <ui:repeat value="#{serverBean.myInvites}" var="invite">
+                        <div style="padding:16px; border-radius:18px; background:white; border:1px solid #e2e8f0; margin-bottom:14px;">
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+
+                                <div>
+                                    <strong>#{invite.serverName}</strong>
+                                    <div style="color:#64748b; font-size:0.95rem;">
+                                        Invited by #{invite.inviterName}
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; gap:8px;">
+                                    <h:form>
+                                        <h:commandButton value="Accept"
+                                                         action="#{serverBean.acceptInvite(invite.inviteID)}"
+                                                         style="padding:10px 16px; background:#16a34a; color:white; border:none; border-radius:12px; cursor:pointer;" />
+                                    </h:form>
+
+                                    <h:form>
+                                        <h:commandButton value="Decline"
+                                                         action="#{serverBean.declineInvite(invite.inviteID)}"
+                                                         style="padding:10px 16px; background:#ef4444; color:white; border:none; border-radius:12px; cursor:pointer;" />
+                                    </h:form>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </ui:repeat>
 
                     <h:panelGroup rendered="#{empty serverBean.myInvites}">
-                        <div class="empty-state" style="margin-top:16px;">
-                            <span class="empty-icon">📭</span>
-                            <p>No pending invites.</p>
+                        <div style="padding:16px; color:#64748b;">
+                            No pending invites.
                         </div>
                     </h:panelGroup>
+                </div>
 
-                    <h:outputText rendered="#{not empty serverBean.loadInviteMessage}"
-                                 value="#{serverBean.loadInviteMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
-
-            <!-- Kick User -->
-            <div class="card">
-                <h3>👢 Kick User from Server</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="grid">
-                        <div class="form-group">
-                            <h:outputLabel for="kickServerName" value="Server Name" />
-                            <h:inputText id="kickServerName" value="#{serverBean.kickServerName}" placeholder="Server name..." />
-                        </div>
-                        <div class="form-group">
-                            <h:outputLabel for="kickUsername" value="Username to Kick" />
-                            <h:inputText id="kickUsername" value="#{serverBean.kickTargetUserName}" placeholder="Username..." />
-                        </div>
-                    </div>
-                    <h:commandButton value="👢 Kick User" action="#{serverBean.kickUserFromServer}" styleClass="btn-danger">
-                        <f:ajax execute="@form" render="@form" />
-                    </h:commandButton>
-                    <h:outputText id="kickMessage" value="#{serverBean.kickMessage}"
-                                 rendered="#{not empty serverBean.kickMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
-
-            <!-- Transfer Ownership -->
-            <div class="card">
-                <h3>🔄 Transfer Server Ownership</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="grid">
-                        <div class="form-group">
-                            <h:outputLabel for="transferServerName" value="Server Name" />
-                            <h:inputText id="transferServerName" value="#{serverBean.transferServerName}" placeholder="Server name..." />
-                        </div>
-                        <div class="form-group">
-                            <h:outputLabel for="transferTargetUser" value="New Owner Username" />
-                            <h:inputText id="transferTargetUser" value="#{serverBean.transferTargetUserName}" placeholder="Username..." />
-                        </div>
-                    </div>
-                    <h:commandButton value="Transfer Ownership" action="#{serverBean.transferServerOwnership}" styleClass="btn-secondary">
-                        <f:ajax execute="@form" render="@form" />
-                    </h:commandButton>
-                    <h:outputText id="transferMessage" value="#{serverBean.transferMessage}"
-                                 rendered="#{not empty serverBean.transferMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
-
-            <!-- Leave Server -->
-            <div class="card">
-                <h3>🚪 Leave Server</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="form-inline">
-                        <h:inputText id="leaveServerName" value="#{serverBean.leaveServerName}" placeholder="Server name..." />
-                        <h:commandButton value="Leave Server" action="#{serverBean.leaveServer}" styleClass="btn-danger">
-                            <f:ajax execute="@form" render="@form leaveMessage" />
-                        </h:commandButton>
-                    </div>
-                    <h:outputText id="leaveMessage" value="#{serverBean.leaveMessage}"
-                                 rendered="#{not empty serverBean.leaveMessage}" styleClass="alert alert-success" />
-                </h:form>
-            </div>
-
-            <!-- View Permissions -->
-            <div class="card">
-                <h3>🔐 View Server Permissions</h3>
-                <h:form>
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="form-inline">
-                        <h:inputText id="viewServerName" value="#{serverBean.permissionServerName}" placeholder="Server name..." />
-                        <h:commandButton value="Load Permissions" action="#{serverBean.loadPermissions}" styleClass="btn-primary">
-                            <f:param name="loadPerm" value="true"/>
-                            <f:ajax execute="@form" render="permissionTable" />
-                        </h:commandButton>
-                    </div>
-                    <h:outputText value="#{serverBean.permissionMessage}"
-                                 rendered="#{not empty serverBean.permissionMessage}" styleClass="alert alert-success" />
-
-                    <h:panelGroup rendered="#{param.loadPerm eq 'true' and not empty serverBean.permissionList}">
-                        <table id="permissionTable" style="margin-top:16px;">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Invite</th>
-                                    <th>Kick</th>
-                                    <th>Create Ch.</th>
-                                    <th>Roles</th>
-                                    <th>Del. Msgs</th>
-                                    <th>Del. Server</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <ui:repeat value="#{serverBean.permissionList}" var="p">
-                                    <tr>
-                                        <td><strong>#{p.username}</strong></td>
-                                        <td>#{p.canInvite ? '✔️' : '✖️'}</td>
-                                        <td>#{p.canKick ? '✔️' : '✖️'}</td>
-                                        <td>#{p.canCreateChannel ? '✔️' : '✖️'}</td>
-                                        <td>#{p.canManageRoles ? '✔️' : '✖️'}</td>
-                                        <td>#{p.canDeleteMessages ? '✔️' : '✖️'}</td>
-                                        <td>#{p.canDeleteServer ? '✔️' : '✖️'}</td>
-                                    </tr>
-                                </ui:repeat>
-                            </tbody>
-                        </table>
-                    </h:panelGroup>
-
-                    <h:panelGroup rendered="#{param.loadPerm eq 'true' and empty serverBean.permissionList}">
-                        <div class="empty-state" style="margin-top:16px;">
-                            <span class="empty-icon">🔍</span>
-                            <p>No permissions found for this server.</p>
-                        </div>
-                    </h:panelGroup>
-                </h:form>
-            </div>
-
-            <!-- Manage Permissions -->
-            <div class="card">
-                <h3>⚙️ Manage Permissions</h3>
-                <h:form id="permManageForm">
-                    <h:messages styleClass="alert alert-error" />
-                    <div class="grid">
-                        <div class="form-group">
-                            <h:outputLabel for="manageServerName" value="Server Name" />
-                            <h:inputText id="manageServerName" value="#{serverBean.manageServerName}" placeholder="Server name..." />
-                        </div>
-                        <div class="form-group">
-                            <h:outputLabel for="manageUsername" value="Username" />
-                            <h:inputText id="manageUsername" value="#{serverBean.targetUserName}" placeholder="Username..." />
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <h:outputLabel for="managePermission" value="Select Permission" />
-                        <h:selectOneMenu id="managePermission" value="#{serverBean.permissionName}">
-                            <f:selectItem itemLabel="— Select Permission —" itemValue="" noSelectionOption="true"/>
-                            <f:selectItem itemLabel="Invite Users"     itemValue="can_invite" />
-                            <f:selectItem itemLabel="Kick Users"       itemValue="can_kick" />
-                            <f:selectItem itemLabel="Create Channel"   itemValue="can_create_channel" />
-                            <f:selectItem itemLabel="Manage Roles"     itemValue="can_manage_roles" />
-                            <f:selectItem itemLabel="Delete Messages"  itemValue="can_delete_messages" />
-                            <f:selectItem itemLabel="Delete Server"    itemValue="can_delete_server" />
-                        </h:selectOneMenu>
-                    </div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <h:commandButton value="✅ Grant Permission" action="#{serverBean.givePermission}" styleClass="btn-success">
-                            <f:ajax execute="@form" render="permManageMsg" />
-                        </h:commandButton>
-                        <h:commandButton value="❌ Remove Permission" action="#{serverBean.removePermission}" styleClass="btn-danger">
-                            <f:ajax execute="@form" render="permManageMsg" />
-                        </h:commandButton>
-                    </div>
-                    <h:outputText id="permManageMsg" value="#{serverBean.grantRemovePermisionMessage}"
-                                 rendered="#{not empty serverBean.grantRemovePermisionMessage}"
-                                 styleClass="alert alert-success" />
-                </h:form>
             </div>
 
         </div>
-    </h:panelGroup>
 
-    <h:panelGroup rendered="#{userLoginBean.userId == 0}">
-        <div class="container container-sm">
-            <div class="alert alert-info">🔒 <strong>Not logged in</strong> — Please sign in to manage servers.</div>
-            <h:button value="Go to Login" outcome="login.xhtml" styleClass="btn-primary" />
-        </div>
-    </h:panelGroup>
+    </div>
+
 </h:body>
 </html>

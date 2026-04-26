@@ -9,6 +9,7 @@
         <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
         <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
         <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+        <f:event type="preRenderView" listener="#{serverBean.resetMessages}" />
     </f:metadata>
 
 <h:head>

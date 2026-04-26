@@ -97,11 +97,29 @@
                 <h:form id="sendForm" enctype="multipart/form-data">
                     <h:inputText value="#{messageService.messageText}"
                                 style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:10px;" />
-                    <h:inputFile value="#{messageService.uploadedFile}"
-                                style="margin-bottom:10px;" />
+                    <h:inputFile id="fileInput"
+                        value="#{messageService.uploadedFile}"
+                        style="display:none;"
+                        accept="image/*" 
+                        onchange="document.getElementById('fileNameText').innerText = this.files[0] ? this.files[0].name : '';" />
+                    <h:outputLabel for="fileInput"
+                        value="Choose File"
+                        style="
+                            padding:10px 16px;
+                            background:#2563eb;
+                            color:white;
+                            border:none;
+                            border-radius:12px;
+                            cursor:pointer;
+                            display:inline-block;
+                            margin-bottom:10px;
+                        " />
+                    <span id="fileNameText" style="margin-left:10px; font-size:13px; color:#64748b;"></span>
                     <h:commandButton value="Send"
-                                    action="#{messageService.sendMessage}"
-                                    style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:700;" />
+                        action="#{messageService.sendMessage}"
+                        style="padding:10px 16px; background:#2563eb; color:white; border:none; border-radius:12px; cursor:pointer;">
+                        <f:ajax execute="@form" render=":chatForm :sendForm" />
+                    </h:commandButton>
                 </h:form>
             </div>
         </div>

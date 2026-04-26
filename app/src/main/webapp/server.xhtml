@@ -173,13 +173,13 @@
                         </h:column>
                         <h:column>
                             <f:facet name="header"><div style="background:#e2e8f0; padding:10px;">Action</div></f:facet>
-                            <h:commandButton value="Accept" action="#{serverBean.acceptInvite(invite.inviteID)}">
+                            <h:commandButton value="Accept" action="#{serverBean.acceptInvite(invite.inviteID)}" style="padding:10px 16px; background:#2563eb; color:white; border:none; border-radius:10px;">
                                 <f:ajax execute="@form" render="@form"/>
                             </h:commandButton>
                         </h:column>
                         <h:column>
                             <f:facet name="header"><div style="background:#e2e8f0; padding:10px;">Action</div></f:facet>
-                            <h:commandButton value="Decline" action="#{serverBean.declineInvite(invite.inviteID)}">
+                            <h:commandButton value="Decline" action="#{serverBean.declineInvite(invite.inviteID)}" style="padding:10px 16px; background:#ef4444; color:white; border:none; border-radius:10px;">
                                 <f:ajax execute="@form" render="@form"/>
                             </h:commandButton>
                         </h:column>
@@ -356,12 +356,14 @@
                     </h:panelGrid>
                     <br/>
                     <h:commandButton value="Grant Permission"
-                                    action="#{serverBean.givePermission}">
+                                    action="#{serverBean.givePermission}"
+                                    style="padding:10px 16px; background:#2563eb; color:white; border:none; border-radius:10px;">
                         <f:ajax execute="@form" render="@form permManageMsg" />
                     </h:commandButton>
 
                     <h:commandButton value="Remove Permission"
-                                    action="#{serverBean.removePermission}">
+                                    action="#{serverBean.removePermission}"
+                                    style="padding:10px 16px; background:#ef4444; color:white; border:none; border-radius:10px;">
                         <f:ajax execute="@form" render="@form permManageMsg" />
                     </h:commandButton>
                     <br/><br/>

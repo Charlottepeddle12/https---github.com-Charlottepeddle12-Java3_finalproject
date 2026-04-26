@@ -4,30 +4,55 @@
 <h:head>
     <title>Login / Signup</title>
 </h:head>
-<h:body>
-    <h:panelGroup id="login" rendered="#{userLoginBean.token == null}">
-        <h1>Login / Signup</h1>
-        <h:form>
-            <h:outputLabel for="username">
-                <h:outputText value="Username: "/>
-            </h:outputLabel>
-            <h:inputText value="#{userLoginBean.userName}" required="true"/>
-            <h:outputLabel for="password">
-                <h:outputText value="Password: "/>
-            </h:outputLabel>
-            <h:inputSecret value="#{userLoginBean.userPassword}" required="true" redisplay="false"/>
-            <h:commandButton value="Login" action="#{userLoginBean.login}" />
-            <h:commandButton value="Sign-Up" action="#{userLoginBean.signup}" />
-            <h:messages />
-            <h:outputText value="#{userLoginBean.message}" />
-        </h:form>
-    </h:panelGroup>
-    <h:panelGroup id="dashboard" rendered="#{userLoginBean.token != null}">
-        <h2>Welcome, #{userLoginBean.userName}!</h2>
-        <h3>Dashboard (coming soon)</h3>
-        <h:form>
-            <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
-        </h:form>
-    </h:panelGroup>
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc;">
+    <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px;">
+        <div style="width:100%; max-width:420px; background:#ffffff; border-radius:24px; box-shadow:0 24px 70px rgba(15,23,42,0.12); overflow:hidden;">
+            <div style="background:#1d4ed8; color:#ffffff; padding:32px;">
+            <h1 style="margin:0; font-size:30px;">Login / Signup</h1>
+        </div>
+        <div style="padding:32px;">
+            <h:panelGroup id="login" rendered="#{userLoginBean.token == null}">
+                <h:form>
+                    <h:messages style="color:#b91c1c; margin-bottom:16px;" />
+                    <h:outputText value="#{userLoginBean.message}" style="display:block; color:#b91c1c; margin-bottom:18px;" />
+                    <div style="margin-bottom:18px;">
+                        <h:outputLabel for="username" value="Username"
+                                       style="display:block; margin-bottom:8px; font-weight:600; color:#0f172a;" />
+                        <h:inputText id="username"
+                                     value="#{userLoginBean.userName}"
+                                     required="true"
+                                     label="Username"
+                                     style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px;"/>
+
+                    </div>
+                    <div style="margin-bottom:22px;">
+                        <h:outputLabel for="password" value="Password"
+                                       style="display:block; margin-bottom:8px; font-weight:600; color:#0f172a;" />
+                        <h:inputSecret id="password"
+                                       value="#{userLoginBean.userPassword}"
+                                       required="true"
+                                       label="Password"
+                                       redisplay="false"
+                                       style="width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:14px;" />
+                    </div>
+                    <h:commandButton value="Login"
+                                     action="#{userLoginBean.login}"
+                                     style="width:100%; padding:14px; background:#1d4ed8; color:#ffffff; border:none; border-radius:14px; font-weight:700; cursor:pointer; margin-bottom:10px;" />
+
+                    <h:commandButton value="Sign-Up"
+                                     action="#{userLoginBean.signup}"
+                                     style="width:100%; padding:14px; background:#16a34a; color:#ffffff; border:none; border-radius:14px; font-weight:700; cursor:pointer;" />
+                </h:form>
+            </h:panelGroup>
+            <h:panelGroup id="dashboard" rendered="#{userLoginBean.token != null}">
+                <h2>Welcome, #{userLoginBean.userName}!</h2>
+                <h3>Dashboard (coming soon)</h3>
+                <h:form>
+                    <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
+                </h:form>
+            </h:panelGroup>
+        </div>
+    </div>
+    </div>
 </h:body>
 </html>

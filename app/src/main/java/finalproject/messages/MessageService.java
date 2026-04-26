@@ -91,6 +91,13 @@ public class MessageService implements Serializable {
         }
         boolean hasText = messageText != null && !messageText.trim().isEmpty();
         boolean hasImage = uploadedFile != null && uploadedFile.getSize() > 0;
+        if (hasImage) {
+            String type = uploadedFile.getContentType();
+            if (type == null || !type.startsWith("image/")) {
+                sendMessageStatus = "Upload failed: only images are allowed.";
+                return;
+            }
+        }
         if (!hasText && !hasImage) {
             sendMessageStatus = "Message cannot be empty.";
             return;

@@ -7,7 +7,7 @@ public class Channel {
     private int serverID;
     private String name;
     private Timestamp createdAt;
-    private Integer createdBy;
+    private int createdBy;
 
     // Getters and Setters
 
@@ -43,11 +43,11 @@ public class Channel {
         this.createdAt = createdAt;
     }
     
-    public Integer getCreatedBy() {
+    public int getCreatedBy() {
     return createdBy;
     }
 
-    public void setCreatedBy(Integer createdBy) {
+    public void setCreatedBy(int createdBy) {
         this.createdBy = createdBy;
     }
 }

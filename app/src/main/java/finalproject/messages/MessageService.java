@@ -111,8 +111,13 @@ public class MessageService implements Serializable {
         }
         try (PreparedStatement stmt = conn.prepareStatement(
         "INSERT INTO messages (channelID, conversationID, senderID, message_text, image_data, image_mime_type, sentOn) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
-            stmt.setObject(1, channelID);            
-            stmt.setObject(2, conversationID);
+            if (conversationID != null) {
+                stmt.setNull(1, java.sql.Types.INTEGER);   
+                stmt.setInt(2, conversationID);
+            } else if (channelID != null) {
+                stmt.setInt(1, channelID);
+                stmt.setNull(2, java.sql.Types.INTEGER);   
+            }
             stmt.setInt(3, login.getUserId());
             stmt.setString(4, hasText ? messageText : null);
             if (hasImage) {
@@ -137,6 +142,8 @@ public class MessageService implements Serializable {
     }
     //  LOAD dm
     public void loadDM(int conversationID) {
+        this.conversationID = conversationID;
+        this.channelID = null;
         messages.clear();
         try (PreparedStatement stmt = conn.prepareStatement(
                 "SELECT m.*, u.username FROM messages m " +
@@ -174,6 +181,8 @@ public class MessageService implements Serializable {
     }
 
     public void loadChannel(int channelID) {
+        this.channelID = channelID;
+        this.conversationID = null;
         messages.clear();
         int currentUser = login.getUserId();
         boolean isOwner = false;
@@ -407,11 +416,17 @@ public class MessageService implements Serializable {
                 createConversationStatus = "Conversation already exists.";
                 return;
             }
+            int currentUser = login.getUserId();
+
+            // 🔥 FIX: sort IDs
+            int userOneID = Math.min(currentUser, otherUserId);
+            int userTwoID = Math.max(currentUser, otherUserId);
+
             PreparedStatement insert = conn.prepareStatement(
                 "INSERT INTO direct_conversations (userOneID, userTwoID) VALUES (?, ?)");
 
-            insert.setInt(1, login.getUserId());
-            insert.setInt(2, otherUserId);
+            insert.setInt(1, userOneID);
+            insert.setInt(2, userTwoID);
             insert.executeUpdate();
             createConversationStatus = "Conversation started.";
             targetUsername = null;

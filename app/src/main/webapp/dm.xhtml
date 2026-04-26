@@ -73,10 +73,13 @@
                 </h:form>
             </div>
             <div style="margin-top:20px; border-top:1px solid #e2e8f0; padding-top:16px;">
+                <h:outputText value="User unavailable."
+                    rendered="#{messageService.currentDMBlocked}"
+                    style="color:#b91c1c; display:block; margin-bottom:10px;" />
                 <h:form id="sendForm" enctype="multipart/form-data">
-                    <h:inputText value="#{messageService.messageText}" style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:10px;" />
-                    <h:inputFile value="#{messageService.uploadedFile}" style="margin-bottom:10px;" />
-                    <h:commandButton value="Send" action="#{messageService.sendMessage}" style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:700;"/>
+                    <h:inputText value="#{messageService.messageText}" disabled="#{messageService.currentDMBlocked}" style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:10px;" />
+                    <h:inputFile value="#{messageService.uploadedFile}" disabled="#{messageService.currentDMBlocked}" style="margin-bottom:10px;" />
+                    <h:commandButton value="Send" action="#{messageService.sendMessage}" disabled="#{messageService.currentDMBlocked}" style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:700;"/>
                 </h:form>
             </div>
         </div>

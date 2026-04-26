@@ -4,78 +4,108 @@
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
       xmlns:ui="jakarta.faces.facelets">
-      <f:metadata>
-        <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
-        <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
-        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
-        <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
-        
-    </f:metadata>
+
+<f:metadata>
+    <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
+    <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
+    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+    <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+</f:metadata>
 
 <h:head>
     <title>Friends Page</title>
 </h:head>
-<h:body>
-    <h:panelGroup  rendered="#{userLoginBean.token != null}">
-        <h1>Send Friend Request</h1>
-            <h:form>
-                <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
-                <br/><br/>
-                <h:outputLabel for="friendUsername">
-                    <h:outputText value="Username: "/>
-                </h:outputLabel>
-                <h:inputText id="friendUsername" value="#{friendsBean.sendFriendUserName}" required="true"/>
-                <h:commandButton value="Send Request" action="#{friendsBean.sendFriendRequest}" />
-                <h:messages />
-                <h:outputText value="#{friendsBean.sendMessage}" />
-            </h:form>
-
-            <!-- Sent Friend Requests Section -->
-            <h2>Sent Friend Requests</h2>
-            <h:panelGroup rendered="#{empty friendsBean.sentFriendRequests}">
-                <p>No pending sent friend requests.</p>
-            </h:panelGroup>
-            <h:panelGroup rendered="#{not empty friendsBean.sentFriendRequests}">
-                <ui:repeat value="#{friendsBean.sentFriendRequests}" var="sentRequest">
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <div style="max-width:1080px; margin:32px auto; padding:24px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h1 style="margin:0;">Friends</h1>
+                <h:button value="Back to Dashboard"
+                        outcome="dashboard.xhtml"
+                        style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:14px;" />
+            </div>
+            <h:outputText value="#{friendsBean.sendMessage}" style="display:block; color:#b91c1c; margin:12px 0;" />
+            <h:outputText value="#{friendsBean.acceptMessage}" style="display:block; color:#b91c1c; margin-bottom:20px;" />
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2>Send Friend Request</h2>
                     <h:form>
-                        <h:outputText value="#{sentRequest}" />
-                        <h:commandButton value="Cancel Request" action="#{friendsBean.cancelSentFriendRequest(sentRequest)}" />
+                        <h:outputLabel for="friendUsername" value="Username"
+                                    style="display:block; margin-bottom:8px; font-weight:600;" />
+                        <h:inputText id="friendUsername"
+                                    value="#{friendsBean.sendFriendUserName}"
+                                    required="true"
+                                    requiredMessage="Username is required."
+                                    style="width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:14px; margin-bottom:8px;" />
+                        <h:message for="friendUsername" style="color:#b91c1c; display:block; margin-bottom:10px;" />
+                        <h:commandButton value="Send Request"
+                                        action="#{friendsBean.sendFriendRequest}"
+                                        style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:14px; font-weight:700;" />
                     </h:form>
+                </div>
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2>Accept Friend Request</h2>
+                    <h:form>
+                        <h:outputLabel for="acceptFriendUsername" value="Username"
+                                    style="display:block; margin-bottom:8px; font-weight:600;" />
+                        <h:inputText id="acceptFriendUsername"
+                                    value="#{friendsBean.acceptFriendUserName}"
+                                    required="true"
+                                    requiredMessage="Username is required."
+                                    style="width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:14px; margin-bottom:8px;" />
+                        <h:message for="acceptFriendUsername" style="color:#b91c1c; display:block; margin-bottom:10px;" />
+                        <h:commandButton value="Accept Request"
+                                        action="#{friendsBean.acceptFriendRequest}"
+                                        style="padding:12px 18px; background:#16a34a; color:white; border:none; border-radius:14px; font-weight:700;" />
+                        <h:commandButton value="Decline Request"
+                                        action="#{friendsBean.declineFriendRequest}"
+                                        style="padding:12px 18px; background:#ef4444; color:white; border:none; border-radius:14px; font-weight:700;" />
+                    </h:form>
+                </div>
+            </div>
+            <div style="margin-top:24px; padding:22px; background:#e2e8f0; border-radius:20px;">
+                <h3>Sent Requests</h3>
+                <h:panelGroup rendered="#{empty friendsBean.sentFriendRequests}">
+                    <div>No pending sent friend requests.</div>
+                </h:panelGroup>
+                <ui:repeat value="#{friendsBean.sentFriendRequests}" var="sentRequest">
+                    <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #cbd5e1;">
+                        <span>#{sentRequest}</span>
+                        <h:form style="margin:0;">
+                            <h:commandButton value="Cancel"
+                                action="#{friendsBean.cancelSentFriendRequest(sentRequest)}"
+                                style="padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:10px;" />
+                        </h:form>
+                    </div>
                 </ui:repeat>
-            </h:panelGroup>
-            <h1>Accept Friend Request</h1>
-            <h:form>
-                <h:outputLabel for="acceptFriendUsername">
-                    <h:outputText value="Username: "/>
-                </h:outputLabel>
-                <h:inputText id="acceptFriendUsername" value="#{friendsBean.acceptFriendUserName}" required="true"/>
-                <h:commandButton value="Accept Request" action="#{friendsBean.acceptFriendRequest}" />
-                <h:messages />
-                <h:outputText value="#{friendsBean.acceptMessage}" />
-            </h:form>
-            <h:panelGroup rendered="#{empty friendsBean.receivedFriendRequests}">
-                <p>No pending friend requests.</p>
-                <h:outputText value="#{friendsBean.receivedRequestsMessage}" />
-            </h:panelGroup>
-            <h:panelGroup rendered="#{not empty friendsBean.receivedFriendRequests}">
+            </div>
+            <div style="margin-top:24px; padding:22px; background:#e2e8f0; border-radius:20px;">
+                <h3>Incoming Requests</h3>
+                <h:panelGroup rendered="#{empty friendsBean.receivedFriendRequests}">
+                    <div>No pending friend requests.</div>
+                    <h:outputText value="#{friendsBean.receivedRequestsMessage}" />
+                </h:panelGroup>
                 <ui:repeat value="#{friendsBean.receivedFriendRequests}" var="requesterName">
-                    <p>#{requesterName}</p>
+                    <div style="padding:10px 0; border-bottom:1px solid #cbd5e1;">
+                        #{requesterName}
+                    </div>
                 </ui:repeat>
-            </h:panelGroup>
-            <h1>Friends</h1>
-            <h2>Total Friends: #{friendsBean.friendCount}</h2>
-            <h3>Your Friends</h3>
-            <h:panelGroup rendered="#{empty friendsBean.friendNames}">
-                <p>No accepted friends yet.</p>
-            </h:panelGroup>
-            <h:panelGroup rendered="#{not empty friendsBean.friendNames}">
+            </div>
+            <div style="margin-top:24px; padding:22px; background:#e2e8f0; border-radius:20px;">
+                <h3>Friends (#{friendsBean.friendCount})</h3>
+                <h:panelGroup rendered="#{empty friendsBean.friendNames}">
+                    <div>No accepted friends yet.</div>
+                </h:panelGroup>
                 <ui:repeat value="#{friendsBean.friendNames}" var="friendName">
-                    <p>#{friendName}</p>
+                    <div style="padding:10px 0; border-bottom:1px solid #cbd5e1;">
+                        #{friendName}
+                    </div>
                 </ui:repeat>
-            </h:panelGroup>>
+            </div>
+        </div>
     </h:panelGroup>
     <h:outputText rendered="#{userLoginBean.userId == 0}" 
-                    value="Please login first." />
+                value="Please login first."
+                style="display:block; text-align:center; margin-top:40px;" />
 </h:body>
-
 </html>

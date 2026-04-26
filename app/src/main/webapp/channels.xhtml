@@ -14,58 +14,78 @@
     </f:metadata>
 
 <h:head>
-    <title>Channel Management</title>
+    <title>Channels | Community Hub</title>
 </h:head>
-<h:body>
+
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
     <h:panelGroup rendered="#{userLoginBean.token != null}">
-        <h:messages style="color:red;" />
-        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
-        <h:form>
-            <h:commandButton value="Back to Servers"
-                action="server.xhtml?faces-redirect=true" />
-        </h:form>
-        <h1>Channel Management</h1>
-        <h:form>
-            <h3>Create Channel</h3>
-            <h:panelGrid columns="2">
-                <h:outputLabel for="channelName" value="Channel Name:" />
-                <h:inputText id="channelName" value="#{channelBean.channelName}" />
-            </h:panelGrid>
-            <br/>
-            <h:commandButton value="Create Channel"
-                action="#{channelBean.createChannel}">
-                <f:ajax execute="@form" render="@form"/>
-            </h:commandButton>            
-            <br/><br/>
-            <h:outputText value="#{channelBean.createMessage}" style="color:green;" />
-        </h:form>
-        <h:form>
-            <h3>Channels in #{channelBean.serverName}</h3>
-            <h:dataTable value="#{channelBean.channels}" var="c" border="1">
-                <h:column>
-                    <f:facet name="header">Channel Name</f:facet>
-                    #{c.name}
-                </h:column>
-                <h:column>
-                    <f:facet name="header">Delete</f:facet>
-                    <h:commandButton value="Delete"
-                        action="#{channelBean.deleteChannel(c.channelID)}"
-                        onclick="return confirm('Delete this channel?');"
-                        immediate="true">
-                        <f:ajax execute="@this" render="@form messages channelTable"/>
-                    </h:commandButton>
-                </h:column>
-                <h:column>
-                    <f:facet name="header">Message</f:facet>
-                    <h:button value="Open Chat" outcome="chat.xhtml">
-                        <f:param name="channelID" value="#{c.channelID}" />
-                        <f:param name="serverName" value="#{channelBean.serverName}" />
-                    </h:button>
-                </h:column>
-            </h:dataTable>
-            <h:outputText value="#{channelBean.deleteChannelMessage}" style="color:red;" /><br/>
-            <h:outputText value="#{channelBean.loadChannelsMessage}" style="color:blue;" />
-        </h:form>
+        <div style="max-width:960px; margin:32px auto; padding:24px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <h1 style="margin:0; font-size:28px;">Channels</h1>
+                    <p style="margin:8px 0 0; color:#475569;">
+                        Manage channels in #{channelBean.serverName}
+                    </p>
+                </div>
+                <h:button value="Back to Dashboard"
+                        outcome="dashboard.xhtml"
+                        style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:14px;" />
+            </div>
+            <h:messages style="color:red;" />
+            <h:form>
+                <h:commandButton value="Back to Servers"
+                    action="server.xhtml?faces-redirect=true" 
+                    style="margin-bottom:20px; padding:10px 16px; background:#64748b; color:white; border:none; border-radius:12px;" />
+            </h:form>
+            <div style="padding:24px; background:#f1f5f9; border-radius:20px; margin-bottom:24px;">
+                <h3 style="margin-top:0;">Create Channel</h3>
+                <h:form>
+                    <div style="margin-bottom:18px;">
+                        <h:outputLabel for="channelName" value="Channel Name:" style="display:block; margin-bottom:8px; font-weight:600;"/>
+                        <h:inputText id="channelName" value="#{channelBean.channelName}" style="width:100%; padding:14px; border:1px solid #cbd5e1; border-radius:14px;"/>
+                    </div>
+                    <h:commandButton value="Create Channel"
+                        action="#{channelBean.createChannel}"
+                        style="padding:12px 18px; background:#16a34a; color:white; border:none; border-radius:14px; font-weight:700;">
+                        <f:ajax execute="@form" render="@form channelTable"/>
+                    </h:commandButton>            
+                    <br/><br/>
+                    <h:outputText value="#{channelBean.createMessage}" style="color:green;" />
+                </h:form>
+            </div>
+            <div>
+                <h3 style="margin-bottom:16px;">Channels in #{channelBean.serverName}</h3>
+                <h:form id="channelTable">
+                    <ui:repeat value="#{channelBean.channels}" var="c">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:#f8fafc; border-radius:18px; margin-bottom:12px; border:1px solid #e2e8f0;">
+                            <div>
+                                <strong>#{c.name}</strong>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <h:commandButton value="Delete"
+                                    action="#{channelBean.deleteChannel(c.channelID)}"
+                                    onclick="return confirm('Delete this channel?');"
+                                    immediate="true"
+                                    style="padding:8px 14px; background:#ef4444; color:white; border:none; border-radius:10px;">
+                                    <f:ajax execute="@this" render="@form messages channelTable"/>
+                                </h:commandButton>
+                                <h:button value="Open Chat" outcome="chat.xhtml" style="padding:8px 14px; background:#2563eb; color:white; border-radius:10px;">
+                                    <f:param name="channelID" value="#{c.channelID}" />
+                                    <f:param name="serverName" value="#{channelBean.serverName}" />
+                                </h:button>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </h:form>
+                <h:panelGroup rendered="#{empty channelBean.channels}">
+                    <div style="padding:20px; border-radius:18px; background:#e2e8f0; color:#334155;">
+                        No channels found.
+                    </div>
+                </h:panelGroup>
+                <h:outputText value="#{channelBean.deleteChannelMessage}" style="color:red;" /><br/>
+                <h:outputText value="#{channelBean.loadChannelsMessage}" style="color:blue;" />
+            </div>
+        </div>
     </h:panelGroup>
  <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
 </h:body>

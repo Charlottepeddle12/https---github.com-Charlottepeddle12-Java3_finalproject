@@ -518,4 +518,9 @@ public class MessageService implements Serializable {
     public void setEditText(String editText) {
         this.editText = editText;
     }
+    public boolean isCurrentDMBlocked() {
+        if (conversationID == null) return false;
+        int otherUser = getOtherUserId(conversationID);
+        return isBlocked(login.getUserId(), otherUser);
+    }
 }

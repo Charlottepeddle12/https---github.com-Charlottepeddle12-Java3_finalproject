@@ -16,74 +16,96 @@
 <h:head>
     <title>Chat</title>
 </h:head>
-<h:body>
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
     <h:panelGroup rendered="#{userLoginBean.token != null}">
-        <h:messages style="color:red;" />
-        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
-        <h:button value="Back to Channels" outcome="channels.xhtml" />
-        <h3>Channels for Server: #{dashboardBean.selectedServerName}</h3>
-        <h:form id="chatForm">
-            <h:commandButton id="autoRefreshBtn"
-                action="#{messageService.loadChannel(messageService.channelID)}"
-                style="display:none">
-                <f:ajax execute="@this" render="messagesTable"/>
-            </h:commandButton>
-            
-            <h:dataTable id="messagesTable" value="#{messageService.messages}" var="m">
-                <h:column>
-                    <b>
-                        #{m.username} (#{messageService.formatDateTime(m.sentOn)}):
-                    </b><br/>
-                    <h:panelGroup rendered="#{messageService.editingMessageID != m.messageID}">
-                        <h:outputText value="#{m.messageText}"/>
-                        <h:graphicImage 
-                            rendered="#{not empty m.imageData and empty m.deletedAt}"
-                            value="data:#{m.imageMimeType};base64,#{messageService.encodeImage(m.imageData)}"
-                            style="max-width:200px; max-height:200px;" />
-                        <h:outputText 
-                            rendered="#{m.senderID == userLoginBean.userId and not empty messageService.getSeenByUsers(m.messageID)}"
-                            value="Seen by #{messageService.getSeenByUsersString(m.messageID)}"
-                            style="color:gray; font-size:10px;" />
-                        <h:outputText 
-                            rendered="#{not empty m.editedAt}"
-                            value=" (edited)"
-                            style="color:gray; font-size:10px;" />
-                        <br/>
-                        <h:commandButton value="Edit"
-                            action="#{messageService.startEdit(m.messageID, m.messageText)}"
-                            rendered="#{m.senderID == userLoginBean.userId 
-                                        and empty m.deletedAt 
-                                        and not messageService.isSeenByOtherUser(m.messageID)}">
-                            <f:ajax execute="@this" render=":chatForm:messagesTable :sendForm"/>
-                        </h:commandButton>
-                    </h:panelGroup>
-                    <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
-                        <h:inputText value="#{messageService.editText}" />
-                        <h:commandButton value="Save"
-                            action="#{messageService.editMessage(m.messageID)}">
-                            <f:ajax execute="@form" render=":chatForm:messagesTable :sendForm"/>
-                        </h:commandButton>
-                    </h:panelGroup>
-                    <h:graphicImage 
-                        rendered="#{not empty m.imageData and empty m.deletedAt}"
-                        value="data:#{m.imageMimeType};base64,#{messageService.encodeImage(m.imageData)}"
-                        style="max-width:200px; max-height:200px;" />
-                    <h:commandButton value="Delete"
-                        action="#{messageService.deleteMessage(m.messageID, m.senderID, dashboardBean.selectedServerID)}"
-                        rendered="#{empty m.deletedAt and 
-                            (m.senderID == userLoginBean.userId 
-                            or userLoginBean.userId == dashboardBean.selectedServerOwnerID)}">
-                        <f:ajax execute="@this" render=":chatForm:messagesTable"/>
+        <div style="max-width:760px; margin:32px auto; padding:24px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <h1 style="margin:0; font-size:28px;">Channel Chat</h1>
+                <div>
+                    <h:button value="Dashboard" outcome="dashboard.xhtml"
+                            style="padding:10px 16px; background:#2563eb; color:white; border-radius:12px; margin-right:6px;" />
+                    <h:button value="Channels" outcome="channels.xhtml"
+                            style="padding:10px 16px; background:#16a34a; color:white; border-radius:12px;" />
+                </div>
+            </div>
+            <h:messages style="color:red; margin:16px 0;" />
+            <div style="margin-top:20px; max-height:400px; overflow-y:auto; padding-right:8px;">
+                <h:form id="chatForm">
+                    <h:commandButton id="autoRefreshBtn"
+                        action="#{messageService.loadChannel(messageService.channelID)}"
+                        style="display:none">
+                        <f:ajax execute="@this" render="messages"/>
                     </h:commandButton>
-                </h:column>
-            </h:dataTable>
-        </h:form>
-        <h:form id="sendForm" enctype="multipart/form-data">
-            <h:inputText value="#{messageService.messageText}" />
-            <h:inputFile value="#{messageService.uploadedFile}" />
-            <h:commandButton value="Send" action="#{messageService.sendMessage}" />
-        </h:form>
+                    <ui:repeat id="messages" value="#{messageService.messages}" var="m">
+                        <div style="margin-bottom:16px; padding:14px; border-radius:16px; background:#f1f5f9;">
+                            <div style="font-weight:700; margin-bottom:6px;">
+                                #{m.username}
+                                <span style="color:#64748b; font-size:12px;">
+                                    (#{messageService.formatDateTime(m.sentOn)})
+                                </span>
+                            </div>
+                            <h:panelGroup rendered="#{messageService.editingMessageID != m.messageID}">
+                                <div style="margin-bottom:6px;">
+                                    <h:outputText value="#{m.messageText}" />
+                                </div>
+                                <h:graphicImage 
+                                    rendered="#{not empty m.imageData and empty m.deletedAt}"
+                                    value="data:#{m.imageMimeType};base64,#{messageService.encodeImage(m.imageData)}"
+                                    style="max-width:200px;border-radius:10px; margin-top:6px;" />
+                                <div style="font-size:11px; color:#64748b; margin-top:6px;">
+                                    <h:outputText 
+                                        rendered="#{m.senderID == userLoginBean.userId 
+                                                    and not empty messageService.getSeenByUsers(m.messageID)}"
+                                        value="Seen by #{messageService.getSeenByUsersString(m.messageID)}" />
+                                    <h:outputText 
+                                        rendered="#{not empty m.editedAt}"
+                                        value=" (edited)" />
+                                </div>
+                                <div style="margin-top:8px;">
+                                    <h:commandButton value="Edit"
+                                        action="#{messageService.startEdit(m.messageID, m.messageText)}"
+                                        rendered="#{m.senderID == userLoginBean.userId 
+                                                    and empty m.deletedAt 
+                                                    and not messageService.isSeenByOtherUser(m.messageID)
+                                                    and empty m.imageData}"
+                                        style="margin-right:6px; padding:6px 10px; border:none; background:#eab308; color:white; border-radius:8px;">
+                                        <f:ajax execute="@this" render=":chatForm :sendForm"/>
+                                    </h:commandButton>
+                                    <h:commandButton value="Delete"
+                                        action="#{messageService.deleteMessage(m.messageID, m.senderID, dashboardBean.selectedServerID)}"
+                                        rendered="#{empty m.deletedAt and 
+                                                    (m.senderID == userLoginBean.userId 
+                                                    or userLoginBean.userId == dashboardBean.selectedServerOwnerID)}"
+                                        style="padding:6px 10px; border:none; background:#ef4444; color:white; border-radius:8px;">
+                                        <f:ajax execute="@this" render=":chatForm"/>
+                                    </h:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{messageService.editingMessageID == m.messageID}">
+                                <h:inputText value="#{messageService.editText}" />
+                                <h:commandButton value="Save"
+                                    action="#{messageService.editMessage(m.messageID)}"
+                                    style="margin-top:6px; padding:8px 12px; background:#22c55e; color:white; border:none; border-radius:8px;">
+                                    <f:ajax execute="@form" render=":chatForm :sendForm"/>
+                                </h:commandButton>
+                            </h:panelGroup>
+                        </div>
+                    </ui:repeat>
+                </h:form>
+            </div>
+            <div style="margin-top:20px; border-top:1px solid #e2e8f0; padding-top:16px;">
+                <h:form id="sendForm" enctype="multipart/form-data">
+                    <h:inputText value="#{messageService.messageText}"
+                                style="width:100%; padding:12px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:10px;" />
+                    <h:inputFile value="#{messageService.uploadedFile}"
+                                style="margin-bottom:10px;" />
+                    <h:commandButton value="Send"
+                                    action="#{messageService.sendMessage}"
+                                    style="padding:12px 18px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:700;" />
+                </h:form>
+            </div>
+        </div>
     </h:panelGroup>
-<h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
+    <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
 </h:body>
 </html>

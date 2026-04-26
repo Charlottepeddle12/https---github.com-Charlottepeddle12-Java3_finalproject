@@ -111,11 +111,12 @@ public class ChannelService implements Serializable {
                     return;
                 }
             }
-            String insertSql = "INSERT INTO channels (serverID, name, created_at) VALUES (?, ?, ?)";
+            String insertSql = "INSERT INTO channels (serverID, name, created_at, created_by) VALUES (?, ?, ?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
                 stmt.setInt(1, resolvedServerID);
                 stmt.setString(2, channelName.trim());
                 stmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
+                stmt.setInt(4, login.getUserId());
                 stmt.executeUpdate();
             }
             createMessage = "Channel created successfully.";

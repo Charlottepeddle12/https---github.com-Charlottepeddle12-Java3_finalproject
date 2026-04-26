@@ -273,6 +273,11 @@ public class MessageService implements Serializable {
         } catch (SQLException e) {
             deleteMessageStatus = e.getMessage();
         }
+        if (conversationID != null) {
+            loadDM(conversationID);
+        } else if (channelID != null) {
+            loadChannel(channelID);
+        }
     }
     // EDIT 
     public void editMessage(int messageID) {

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:f="jakarta.faces.core">
+      <f:metadata>
+        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+      </f:metadata>
+<h:head>
+    <title>Block List</title>
+</h:head>
+<h:body>
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+        <h3>Blocked Users</h3>
+        <ui:repeat value="#{blockUserBean.blockedUserNames}" var="blocked">
+            <h:form style="display:inline">
+                <h:outputText value="#{blocked}" />
+                <h:commandButton value="Unblock" action="#{blockUserBean.unblockUser}">
+                    <f:setPropertyActionListener target="#{blockUserBean.blockedUserName}" value="#{blocked}" />
+                </h:commandButton>
+            </h:form>
+            <br/>
+        </ui:repeat>
+        <h:form>
+            <h:outputLabel for="blockInput" value="Block user:" />
+            <h:inputText id="blockInput" value="#{blockUserBean.blockedUserName}" />
+            <h:commandButton value="Block" action="#{blockUserBean.blockUser}" />
+            <br/>
+            <h:outputText value="#{blockUserBean.message}" style="color:red;" rendered="#{not empty blockUserBean.message}" />
+        </h:form>
+    </h:panelGroup>
+    <h:outputText rendered="#{userLoginBean.userId == 0}" 
+                    value="Please login first." />
+</h:body>
+</html>

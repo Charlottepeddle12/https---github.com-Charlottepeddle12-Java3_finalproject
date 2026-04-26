@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <title>Messages</title>
+</h:head>
+<h:body>
+    <h:panelGroup  rendered="#{userLoginBean.userId > 0}">
+        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" /><h3>Channels for Server: #{dashboardBean.selectedServerName}</h3>
+    </h:panelGroup>
+    <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
+</h:body>
+</html>

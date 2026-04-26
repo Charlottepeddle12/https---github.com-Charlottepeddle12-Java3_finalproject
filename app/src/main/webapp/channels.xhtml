@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+       <f:metadata>
+        <f:event type="preRenderView" listener="#{friendsBean.loadReceivedFriendRequests}" />
+        <f:event type="preRenderView" listener="#{friendsBean.loadFriendNames}" />
+        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+        <f:event type="preRenderView" listener="#{friendsBean.loadSentFriendRequests}" />
+        <f:event type="preRenderView" listener="#{channelBean.loadChannels}" />
+        <f:viewParam name="serverName" value="#{channelBean.serverName}" />
+    </f:metadata>
+
+<h:head>
+    <title>Channel Management</title>
+</h:head>
+<h:body>
+    <h:panelGroup rendered="#{userLoginBean.token != null}">
+        <h:messages style="color:red;" />
+        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
+        <h:form>
+            <h:commandButton value="Back to Servers"
+                action="server.xhtml?faces-redirect=true" />
+        </h:form>
+        <h1>Channel Management</h1>
+        <h:form>
+            <h3>Create Channel</h3>
+            <h:panelGrid columns="2">
+                <h:outputLabel for="channelName" value="Channel Name:" />
+                <h:inputText id="channelName" value="#{channelBean.channelName}" />
+            </h:panelGrid>
+            <br/>
+            <h:commandButton value="Create Channel"
+                action="#{channelBean.createChannel}">
+                <f:ajax execute="@form" render="@form"/>
+            </h:commandButton>            
+            <br/><br/>
+            <h:outputText value="#{channelBean.createMessage}" style="color:green;" />
+        </h:form>
+        <h:form>
+            <h3>Channels in #{channelBean.serverName}</h3>
+            <h:dataTable value="#{channelBean.channels}" var="c" border="1">
+                <h:column>
+                    <f:facet name="header">Channel Name</f:facet>
+                    #{c.name}
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Delete</f:facet>
+                    <h:commandButton value="Delete"
+                        action="#{channelBean.deleteChannel(c.channelID)}"
+                        onclick="return confirm('Delete this channel?');"
+                        immediate="true">
+                        <f:ajax execute="@this" render="@form messages channelTable"/>
+                    </h:commandButton>
+                </h:column>
+                <h:column>
+                    <f:facet name="header">Message</f:facet>
+                    <h:button value="Open Chat" outcome="chat.xhtml">
+                        <f:param name="channelID" value="#{c.channelID}" />
+                        <f:param name="serverName" value="#{channelBean.serverName}" />
+                    </h:button>
+                </h:column>
+            </h:dataTable>
+            <h:outputText value="#{channelBean.deleteChannelMessage}" style="color:red;" /><br/>
+            <h:outputText value="#{channelBean.loadChannelsMessage}" style="color:blue;" />
+        </h:form>
+    </h:panelGroup>
+ <h:outputText rendered="#{userLoginBean.userId == 0}" value="Please login first." />
+</h:body>
+</html>

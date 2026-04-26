@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+      <f:metadata>
+        <f:viewAction action="#{messageService.loadConversations}" />
+    </f:metadata>
+<h:head>
+    <title>Dashboard</title>
+</h:head>
+<h:body>
+    <h:panelGroup id="dashboard" rendered="#{userLoginBean.token != null}">
+        <h2>Welcome, #{userLoginBean.userName}!</h2>
+        <h3>Dashboard</h3>
+        <h:form>
+            <h:commandButton value="Friends" action="friends.xhtml?faces-redirect=true" />
+            <h:commandButton value="Servers" action="server.xhtml?faces-redirect=true" />
+            <h:commandButton value="Logout" action="#{userLoginBean.logout}" />
+            <h:commandButton value="Blocked Users" action="block.xhtml?faces-redirect=true" /><br/>
+            <br/><br/>
+            <h:panelGroup layout="block">
+                <h:outputText value="Start DM with user:" />
+                <br/>
+                <h:inputText value="#{messageService.targetUsername}" />
+                <h:commandButton value="Start DM" action="#{messageService.createConversation}" />
+                <br/>
+                <h:outputText value="#{messageService.createConversationStatus}" style="color:green;" />
+            </h:panelGroup>
+            <br/><br/>
+            <h:panelGroup layout="block">
+                <h3>Your Conversations</h3>
+                <ui:repeat value="#{messageService.conversations}" var="c">
+                    <h:panelGroup layout="block" style="margin-bottom:10px;">
+                        <h:outputText value="#{c.username}" style="margin-right:10px;" />
+                        <h:commandButton value="Open DM"
+                            action="dm.xhtml?faces-redirect=true">
+                            <f:setPropertyActionListener 
+                                target="#{messageService.conversationID}" 
+                                value="#{c.conversationID}" />
+                        </h:commandButton>
+                    </h:panelGroup>
+                </ui:repeat>
+            </h:panelGroup>
+        </h:form>
+    </h:panelGroup>
+    <h:outputText rendered="#{userLoginBean.userId == 0}"  value="Please login first." />
+</h:body>
+</html>

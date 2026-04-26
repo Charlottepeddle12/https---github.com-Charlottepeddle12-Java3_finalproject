@@ -3,34 +3,112 @@
       xmlns:h="jakarta.faces.html"
       xmlns:ui="jakarta.faces.facelets"
       xmlns:f="jakarta.faces.core">
-      <f:metadata>
-        <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
-      </f:metadata>
+
+<f:metadata>
+    <f:event type="preRenderView" listener="#{blockUserBean.loadBlockedUsers}" />
+</f:metadata>
+
 <h:head>
-    <title>Block List</title>
+    <title>Block Users | Community Hub</title>
 </h:head>
-<h:body>
+
+<h:body style="margin:0; font-family:Arial,Helvetica,sans-serif; background:#f8fafc; color:#0f172a;">
+
     <h:panelGroup rendered="#{userLoginBean.token != null}">
-        <h:button value="Back to Dashboard" outcome="dashboard.xhtml" />
-        <h3>Blocked Users</h3>
-        <ui:repeat value="#{blockUserBean.blockedUserNames}" var="blocked">
-            <h:form style="display:inline">
-                <h:outputText value="#{blocked}" />
-                <h:commandButton value="Unblock" action="#{blockUserBean.unblockUser}">
-                    <f:setPropertyActionListener target="#{blockUserBean.blockedUserName}" value="#{blocked}" />
-                </h:commandButton>
-            </h:form>
-            <br/>
-        </ui:repeat>
-        <h:form>
-            <h:outputLabel for="blockInput" value="Block user:" />
-            <h:inputText id="blockInput" value="#{blockUserBean.blockedUserName}" />
-            <h:commandButton value="Block" action="#{blockUserBean.blockUser}" />
-            <br/>
-            <h:outputText value="#{blockUserBean.message}" style="color:red;" rendered="#{not empty blockUserBean.message}" />
-        </h:form>
+
+        <div style="max-width:760px; margin:32px auto; padding:24px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08);">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <h1 style="margin:0; font-size:28px;">Block / Unblock Users</h1>
+                    <p style="margin:8px 0 0; color:#475569;">Manage users you have blocked from your account.
+                    </p>
+                </div>
+
+                <h:link outcome="dashboard.xhtml"
+                        value="Back to Dashboard"
+                        style="padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+            </div>
+            
+            <h:panelGroup rendered="#{not empty blockUserBean.message}">
+                <div style="margin:18px 0; padding:14px; border-radius:14px; background:#fef2f2; color:#b91c1c; font-weight:600;">
+                    #{blockUserBean.message}
+                </div>
+            </h:panelGroup>
+
+            <div style="display:grid; gap:20px; margin-top:24px;">
+
+                <div style="padding:24px; background:#f1f5f9; border-radius:20px;">
+                    <h2 style="margin-top:0;">Block a User</h2>
+
+                    <h:form>
+                        <div style="margin-bottom:18px;">
+                            <h:outputLabel for="blockInput"
+                                           value="Username"
+                                           style="display:block; margin-bottom:8px; font-weight:600; color:#0f172a;" />
+
+                            <h:inputText id="blockInput"
+                                         value="#{blockUserBean.blockedUserName}"
+                                         required="true"
+                                         requiredMessage="Username is required."
+                                         style="width:100%; box-sizing:border-box; padding:14px; border:1px solid #cbd5e1; border-radius:14px;" />
+                        </div>
+
+                        <h:message for="blockInput"
+                                   style="display:block; color:#b91c1c; margin-bottom:12px;" />
+
+                        <h:commandButton value="Block User"
+                                         action="#{blockUserBean.blockUser}"
+                                         style="padding:12px 18px; background:#ef4444; color:white; border:none; border-radius:14px; font-weight:700; cursor:pointer;" />
+                    </h:form>
+                </div>
+
+                <div style="padding:24px; background:#e2e8f0; border-radius:20px;">
+                    <h2 style="margin-top:0;">Blocked Users</h2>
+
+                    <ui:repeat value="#{blockUserBean.blockedUserNames}" var="blocked">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid #cbd5e1;">
+                            <div>
+                                <strong style="color:#0f172a;">#{blocked}</strong>
+                                <div style="color:#64748b; font-size:0.9rem; margin-top:4px;">
+                                    This user is currently blocked.
+                                </div>
+                            </div>
+
+                            <h:form style="margin:0;">
+                                <h:commandButton value="Unblock"
+                                                 action="#{blockUserBean.unblockUser}"
+                                                 onclick="return confirm('Unblock this user?');"
+                                                 style="padding:10px 16px; background:#16a34a; color:white; border:none; border-radius:12px; cursor:pointer; font-weight:700;">
+                                    <f:setPropertyActionListener target="#{blockUserBean.blockedUserName}" value="#{blocked}" />
+                                </h:commandButton>
+                            </h:form>
+                        </div>
+                    </ui:repeat>
+
+                    <h:panelGroup rendered="#{empty blockUserBean.blockedUserNames}">
+                        <div style="padding:16px; border-radius:16px; background:#f8fafc; color:#64748b;">
+                            You have not blocked any users yet.
+                        </div>
+                    </h:panelGroup>
+                </div>
+
+            </div>
+
+        </div>
+
     </h:panelGroup>
-    <h:outputText rendered="#{userLoginBean.userId == 0}" 
-                    value="Please login first." />
+
+    <h:panelGroup rendered="#{userLoginBean.token == null}">
+        <div style="max-width:560px; margin:80px auto; padding:28px; background:white; border-radius:24px; box-shadow:0 24px 60px rgba(15,23,42,0.08); text-align:center;">
+            <h2 style="margin-top:0;">Please login first.</h2>
+            <p style="color:#64748b;">You need to be logged in before managing blocked users.</p>
+
+            <h:link outcome="login.xhtml"
+                    value="Go to Login"
+                    style="display:inline-block; margin-top:12px; padding:12px 18px; background:#2563eb; color:white; border-radius:14px; text-decoration:none; font-weight:700;" />
+        </div>
+    </h:panelGroup>
+
 </h:body>
 </html>
